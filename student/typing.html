@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>따라 쓰기 연습 - 어휘나라</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .typing-display {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin: 2rem 0;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            min-height: 4rem;
+            line-height: 1.5;
+        }
+
+        .word-badge {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background: var(--secondary-gradient);
+            color: white;
+            border-radius: var(--radius-full);
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            box-shadow: var(--shadow-md);
+        }
+
+        .typing-input {
+            font-size: 1.5rem;
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--bg-dark-tertiary);
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-lg);
+            color: var(--text-primary);
+            font-family: var(--font-korean);
+            transition: all var(--transition-base);
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            display: block;
+        }
+
+        .typing-input:focus {
+            outline: none;
+            border-color: var(--primary-500);
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.3);
+            transform: scale(1.02);
+        }
+
+        .typing-input.correct {
+            border-color: #00f2a0;
+            box-shadow: 0 0 0 4px rgba(0, 242, 160, 0.3);
+            animation: correctPulse 0.5s ease-out;
+        }
+
+        .typing-input.incorrect {
+            border-color: var(--secondary-500);
+            box-shadow: 0 0 0 4px rgba(245, 87, 108, 0.3);
+            animation: shake 0.5s ease-out;
+        }
+
+        @keyframes correctPulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-10px);
+            }
+
+            75% {
+                transform: translateX(10px);
+            }
+        }
+
+        .hint-box {
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        .repetition-tracker {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+
+        .repetition-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            transition: all var(--transition-base);
+            background: var(--bg-dark-tertiary);
+        }
+
+        .repetition-circle.active {
+            border-color: var(--primary-500);
+            background: rgba(102, 126, 234, 0.2);
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
+            transform: scale(1.1);
+        }
+
+        .repetition-circle.completed {
+            border-color: #00f2a0;
+            background: rgba(0, 242, 160, 0.2);
+            color: #00f2a0;
+        }
+
+        .character-feedback {
+            display: inline-block;
+            font-size: 1.5rem;
+            margin: 0 2px;
+            transition: all var(--transition-fast);
+        }
+
+        .character-feedback.correct-char {
+            color: #00f2a0;
+        }
+
+        .character-feedback.incorrect-char {
+            color: var(--secondary-500);
+            text-decoration: line-through;
+        }
+
+        .character-feedback.pending-char {
+            color: var(--text-muted);
+        }
+
+        .completion-confetti {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .success-message {
+            font-size: 1.25rem;
+            color: #00f2a0;
+            font-weight: 600;
+            margin: 1rem 0;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container navbar-content">
+            <a href="dashboard.html" class="navbar-brand">✨ 어휘나라</a>
+            <ul class="navbar-menu">
+                <li><a href="dashboard.html" class="navbar-link">← 대시보드로</a></li>
+                <li><span id="userName" class="navbar-link"></span></li>
+                <li><button onclick="auth.logout()" class="btn btn-outline btn-sm">로그아웃</button></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <section class="container mt-4 mb-5">
+        <!-- Header -->
+        <div class="glass-card mb-4">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <h1>✍️ 따라 쓰기 연습</h1>
+                    <p class="card-text">어휘의 뜻을 정확하게 3번 따라 쓰며 암기하세요</p>
+                </div>
+                <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                    <span class="badge badge-primary" id="progressBadge">1 / 10</span>
+                    <span class="badge badge-success" id="accuracyBadge">정확도: 100%</span>
+                </div>
+            </div>
+            <div class="progress-bar mt-3">
+                <div class="progress-fill" id="overallProgress" style="width: 10%"></div>
+            </div>
+        </div>
+
+        <!-- Typing Area -->
+        <div class="glass-card mb-4" id="typingArea">
+            <!-- Current Word -->
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <div class="word-badge" id="currentWord">어휘</div>
+                <p style="color: var(--text-muted); margin-top: 0.5rem;">
+                    한자: <span id="currentHanja"></span>
+                </p>
+            </div>
+
+            <!-- Repetition Tracker -->
+            <div class="repetition-tracker">
+                <div class="repetition-circle active" id="rep1">1</div>
+                <div class="repetition-circle" id="rep2">2</div>
+                <div class="repetition-circle" id="rep3">3</div>
+            </div>
+
+            <div class="typing-display" id="meaningDisplay">
+                준비 중...
+            </div>
+
+            <div class="hint-box">
+                <p style="margin: 0; font-size: 1.125rem; color: var(--text-secondary);">
+                    <strong>💡 위의 뜻을 정확하게 3번 입력하세요</strong>
+                </p>
+                <p style="margin: 0.5rem 0 0 0; color: var(--text-muted); font-size: 0.875rem;">
+                    띄어쓰기와 맞춤법을 정확하게 지켜주세요
+                </p>
+            </div>
+
+            <div style="text-align: center; margin-top: 2rem;">
+                <input type="text" id="typingInput" class="typing-input" placeholder="여기에 뜻을 입력하세요..." disabled
+                    autocomplete="off" spellcheck="false" />
+                <div id="feedbackDisplay" style="margin-top: 1rem; min-height: 3rem;"></div>
+            </div>
+
+            <div style="text-align: center; margin-top: 2rem;">
+                <button id="startBtn" class="btn btn-primary btn-lg" onclick="startTyping()">
+                    시작하기
+                </button>
+                <button id="skipBtn" class="btn btn-outline" onclick="skipWord()" style="display: none;">
+                    건너뛰기
+                </button>
+            </div>
+
+            <div class="mt-4"
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+                <div class="card text-center">
+                    <div class="stats-number" id="completedWords">0</div>
+                    <div class="stats-label">완료한 어휘</div>
+                </div>
+                <div class="card text-center">
+                    <div class="stats-number" id="totalAttempts">0</div>
+                    <div class="stats-label">총 입력 횟수</div>
+                </div>
+                <div class="card text-center">
+                    <div class="stats-number" id="perfectCount">0</div>
+                    <div class="stats-label">완벽한 입력</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsSection" class="glass-card mt-5 hidden">
+            <div class="text-center">
+                <div style="font-size: 5rem; margin-bottom: 1rem;">🎉</div>
+                <h2>따라 쓰기 연습 완료!</h2>
+                <div class="stats-number" id="finalScore" style="margin: 2rem 0;">0점</div>
+                <p class="card-text" id="resultMessage"></p>
+
+                <div class="grid grid-3 mt-4 mb-4" style="max-width: 800px; margin-left: auto; margin-right: auto;">
+                    <div class="card">
+                        <div class="stats-number" id="finalCompleted">0</div>
+                        <div class="stats-label">완료한 어휘</div>
+                    </div>
+                    <div class="card">
+                        <div class="stats-number" id="finalAccuracy">100%</div>
+                        <div class="stats-label">정확도</div>
+                    </div>
+                    <div class="card">
+                        <div class="stats-number" id="finalPerfect">0</div>
+                        <div class="stats-label">완벽한 입력</div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                    <button onclick="restartTyping()" class="btn btn-secondary">
+                        🔄 다시 연습하기
+                    </button>
+                    <a href="writing.html" class="btn btn-primary">
+                        다음 단계 (문장 만들기) →
+                    </a>
+                    <a href="dashboard.html" class="btn btn-outline">
+                        대시보드로
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tips -->
+        <div class="card mt-4">
+            <h3>💡 따라 쓰기 팁</h3>
+            <ul style="color: var(--text-secondary); line-height: 2;">
+                <li>뜻을 정확하게 3번 입력하면 다음 어휘로 넘어갑니다</li>
+                <li>띄어쓰기와 맞춤법을 정확하게 지켜주세요</li>
+                <li>천천히 읽으면서 의미를 이해하며 입력하세요</li>
+                <li>틀리면 다시 입력할 수 있으니 걱정하지 마세요</li>
+            </ul>
+        </div>
+    </section>
+
+    <script src="../js/auth.js"></script>
+    <script src="../js/vocab-data.js"></script>
+    <script>
+        // Check authentication
+        if (!auth.requireAuth('student')) {
+            window.location.href = 'login.html';
+        }
+
+        const user = auth.getCurrentUser();
+        document.getElementById('userName').textContent = `${user.name} (${user.grade}학년)`;
+
+        // Typing state
+        let currentIndex = 0;
+        let vocabulary = [];
+        let currentRepetition = 1; // 1, 2, 3
+        let completedWords = 0;
+        let totalAttempts = 0;
+        let perfectCount = 0;
+        let correctInputs = 0;
+        let isActive = false;
+
+        // Initialize
+        function initTyping() {
+            const studyDate = sessionStorage.getItem('studyDate');
+            vocabulary = vocabDB.getDailyWords(2, user.grade, studyDate);
+
+            if (vocabulary.length === 0) {
+                alert('학습할 어휘가 없습니다. 관리자에게 문의하세요.');
+                window.location.href = 'dashboard.html';
+                return;
+            }
+        }
+
+        // Start typing practice
+        function startTyping() {
+            document.getElementById('startBtn').style.display = 'none';
+            document.getElementById('skipBtn').style.display = 'inline-flex';
+            document.getElementById('typingInput').disabled = false;
+            document.getElementById('typingInput').focus();
+
+            isActive = true;
+            showWord();
+        }
+
+        // Show current word
+        function showWord() {
+            if (currentIndex >= vocabulary.length) {
+                finishTyping();
+                return;
+            }
+
+            const vocab = vocabulary[currentIndex];
+
+            document.getElementById('currentWord').textContent = vocab.word;
+            document.getElementById('currentHanja').textContent = vocab.hanja;
+            document.getElementById('meaningDisplay').textContent = vocab.meaning;
+            document.getElementById('typingInput').value = '';
+            document.getElementById('feedbackDisplay').innerHTML = '';
+
+            // Reset repetition
+            currentRepetition = 1;
+            updateRepetitionTracker();
+
+            // Reset input styling
+            const input = document.getElementById('typingInput');
+            input.classList.remove('correct', 'incorrect');
+
+            // Update progress
+            updateProgress();
+        }
+
+        // Update repetition tracker
+        function updateRepetitionTracker() {
+            for (let i = 1; i <= 3; i++) {
+                const circle = document.getElementById(`rep${i}`);
+                circle.classList.remove('active', 'completed');
+
+                if (i < currentRepetition) {
+                    circle.classList.add('completed');
+                    circle.innerHTML = '✓';
+                } else if (i === currentRepetition) {
+                    circle.classList.add('active');
+                    circle.innerHTML = i;
+                } else {
+                    circle.innerHTML = i;
+                }
+            }
+        }
+
+        // Update progress display
+        function updateProgress() {
+            document.getElementById('progressBadge').textContent =
+                `${currentIndex + 1} / ${vocabulary.length}`;
+            document.getElementById('overallProgress').style.width =
+                ((currentIndex + 1) / vocabulary.length * 100) + '%';
+
+            document.getElementById('completedWords').textContent = completedWords;
+            document.getElementById('totalAttempts').textContent = totalAttempts;
+            document.getElementById('perfectCount').textContent = perfectCount;
+
+            // Calculate accuracy
+            const accuracy = totalAttempts > 0 ?
+                Math.round((correctInputs / totalAttempts) * 100) : 100;
+            document.getElementById('accuracyBadge').textContent = `정확도: ${accuracy}%`;
+        }
+
+        // Input handler
+        document.getElementById('typingInput').addEventListener('input', (e) => {
+            const input = e.target.value;
+            const correctMeaning = vocabulary[currentIndex].meaning;
+
+            // Provide real-time feedback
+            provideFeedback(input, correctMeaning);
+        });
+
+        // Handle Enter key
+        document.getElementById('typingInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                checkInput();
+            }
+        });
+
+        // Check input
+        function checkInput() {
+            const input = document.getElementById('typingInput').value.trim();
+            const correctMeaning = vocabulary[currentIndex].meaning;
+
+            if (!input) return;
+
+            totalAttempts++;
+
+            if (input === correctMeaning) {
+                handleCorrect();
+            } else {
+                handleIncorrect();
+            }
+        }
+
+        // Provide character-by-character feedback
+        function provideFeedback(input, correctMeaning) {
+            const feedbackDiv = document.getElementById('feedbackDisplay');
+            let html = '<div style="display: flex; justify-content: center; flex-wrap: wrap; line-height: 2;">';
+
+            for (let i = 0; i < correctMeaning.length; i++) {
+                const char = correctMeaning[i];
+                const inputChar = input[i];
+
+                let className = 'pending-char';
+                let displayChar = char;
+
+                if (inputChar !== undefined) {
+                    if (inputChar === char) {
+                        className = 'correct-char';
+                    } else {
+                        className = 'incorrect-char';
+                        displayChar = inputChar;
+                    }
+                }
+
+                html += `<span class="character-feedback ${className}">${displayChar}</span>`;
+            }
+
+            html += '</div>';
+            feedbackDiv.innerHTML = html;
+        }
+
+        // Handle correct answer
+        function handleCorrect() {
+            const inputField = document.getElementById('typingInput');
+            inputField.classList.add('correct');
+            inputField.disabled = true;
+
+            correctInputs++;
+
+            // Show success message
+            const feedbackDiv = document.getElementById('feedbackDisplay');
+            feedbackDiv.innerHTML = `<p class="success-message">✓ ${currentRepetition}번째 정확합니다!</p>`;
+
+            // Play success animation
+            showSuccessAnimation();
+
+            setTimeout(() => {
+                inputField.classList.remove('correct');
+                inputField.value = '';
+                inputField.disabled = false;
+
+                if (currentRepetition >= 3) {
+                    // All 3 repetitions completed
+                    perfectCount++;
+                    completedWords++;
+
+                    setTimeout(() => {
+                        currentIndex++;
+                        currentRepetition = 1;
+                        inputField.focus();
+                        showWord();
+                    }, 500);
+                } else {
+                    // Next repetition
+                    currentRepetition++;
+                    updateRepetitionTracker();
+                    feedbackDiv.innerHTML = '';
+                    inputField.focus();
+                }
+
+                updateProgress();
+            }, 1000);
+        }
+
+        // Handle incorrect answer
+        function handleIncorrect() {
+            const inputField = document.getElementById('typingInput');
+            inputField.classList.add('incorrect');
+
+            const feedbackDiv = document.getElementById('feedbackDisplay');
+            feedbackDiv.innerHTML = '<p style="color: var(--secondary-500); font-weight: 600;">다시 정확하게 입력해주세요!</p>';
+
+            setTimeout(() => {
+                inputField.classList.remove('incorrect');
+                inputField.value = '';
+                feedbackDiv.innerHTML = '';
+                updateProgress();
+            }, 1000);
+        }
+
+        // Skip word
+        function skipWord() {
+            if (!isActive) return;
+
+            if (confirm('이 어휘를 건너뛰시겠습니까?')) {
+                currentIndex++;
+                currentRepetition = 1;
+                updateProgress();
+                showWord();
+            }
+        }
+
+        // Show success animation
+        function showSuccessAnimation() {
+            const feedbackDiv = document.getElementById('feedbackDisplay');
+            // Animation is already shown in handleCorrect
+        }
+
+        // Finish typing practice
+        function finishTyping() {
+            isActive = false;
+
+            // Calculate final stats
+            const total = vocabulary.length;
+            const accuracy = totalAttempts > 0 ?
+                Math.round((correctInputs / totalAttempts) * 100) : 100;
+            const score = Math.round((completedWords / total) * accuracy);
+
+            // Update progress
+            const currentProgress = user.progress.typingCompleted || 0;
+            auth.updateProgress({
+                typingCompleted: currentProgress + vocabulary.length
+            });
+
+            // Save history
+            auth.saveStudyHistory({
+                type: 'typing',
+                vocabularyCount: vocabulary.length,
+                score: score,
+                completed: completedWords,
+                accuracy: accuracy,
+                perfectCount: perfectCount,
+                totalAttempts: totalAttempts
+            });
+
+            // Show results
+            document.getElementById('typingArea').classList.add('hidden');
+            document.getElementById('resultsSection').classList.remove('hidden');
+            document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+
+            document.getElementById('finalScore').textContent = score + '점';
+            document.getElementById('finalCompleted').textContent = completedWords;
+            document.getElementById('finalAccuracy').textContent = accuracy + '%';
+            document.getElementById('finalPerfect').textContent = perfectCount;
+
+            let message = '';
+            if (score >= 90) {
+                message = '완벽한 따라 쓰기예요! 🌟 어휘의 뜻을 완전히 익혔어요!';
+            } else if (score >= 70) {
+                message = '잘했어요! 👏 정확도가 높네요. 계속 연습하면 더 좋아질 거예요!';
+            } else if (score >= 50) {
+                message = '좋아요! 💪 조금만 더 정확하게 입력해보세요!';
+            } else {
+                message = '괜찮아요! 😊 띄어쓰기에 주의하면서 다시 연습해보면 어떨까요?';
+            }
+
+            document.getElementById('resultMessage').textContent = message;
+
+            // Show confetti for high scores
+            if (score >= 90) {
+                showConfetti();
+            }
+        }
+
+        // Show confetti animation
+        function showConfetti() {
+            const confettiContainer = document.createElement('div');
+            confettiContainer.className = 'completion-confetti';
+            document.body.appendChild(confettiContainer);
+
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.style.position = 'absolute';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.top = '-10px';
+                    confetti.style.width = '10px';
+                    confetti.style.height = '10px';
+                    confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 70%, 60%)`;
+                    confetti.style.borderRadius = '50%';
+                    confetti.style.animation = `fall ${2 + Math.random() * 2}s linear forwards`;
+                    confettiContainer.appendChild(confetti);
+
+                    setTimeout(() => confetti.remove(), 4000);
+                }, i * 30);
+            }
+
+            setTimeout(() => confettiContainer.remove(), 5000);
+        }
+
+        // Add fall animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fall {
+                to {
+                    transform: translateY(100vh) rotate(360deg);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Restart typing
+        function restartTyping() {
+            currentIndex = 0;
+            currentRepetition = 1;
+            completedWords = 0;
+            totalAttempts = 0;
+            perfectCount = 0;
+            correctInputs = 0;
+
+            document.getElementById('typingArea').classList.remove('hidden');
+            document.getElementById('resultsSection').classList.add('hidden');
+            document.getElementById('startBtn').style.display = 'inline-flex';
+            document.getElementById('skipBtn').style.display = 'none';
+            document.getElementById('typingInput').disabled = true;
+            document.getElementById('meaningDisplay').textContent = '준비 중...';
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // Get new vocabulary
+            const studyDate = sessionStorage.getItem('studyDate');
+            vocabulary = vocabDB.getDailyWords(2, user.grade, studyDate);
+            updateProgress();
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && isActive) {
+                if (confirm('따라 쓰기 연습을 종료하시겠습니까?')) {
+                    finishTyping();
+                }
+            }
+        });
+
+        // Initialize
+        initTyping();
+    </script>
+</body>
+
+</html>

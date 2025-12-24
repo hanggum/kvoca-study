@@ -1,0 +1,2639 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>선생님 대시보드 - 어휘나라</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Gamja+Flower&family=Nanum+Myeongjo&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container navbar-content">
+            <a href="../index.html" class="navbar-brand">✨ 어휘나라</a>
+            <ul class="navbar-menu">
+                <li><a href="dashboard.html" class="navbar-link">대시보드</a></li>
+                <li><span id="userName" class="navbar-link"></span></li>
+                <li><button onclick="showSettingsModal()" class="btn btn-outline btn-sm"
+                        style="margin-right: 0.5rem;">⚙️ 설정</button></li>
+                <li><button onclick="auth.logout()" class="btn btn-outline btn-sm">로그아웃</button></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal" style="z-index: 3000;">
+        <div class="modal" style="position: relative;">
+            <button class="modal-close" onclick="closeSettingsModal()">×</button>
+            <div class="modal-header">
+                <h2 class="modal-title">환경 설정</h2>
+                <p style="color: #666;">선생님 맞춤형 설정을 관리하세요.</p>
+            </div>
+
+            <form id="settingsForm">
+                <div class="form-group">
+                    <label class="form-label">학교 이름</label>
+                    <input type="text" id="settingSchoolName" class="form-input" placeholder="예: 서울초등학교">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">학급 이름</label>
+                    <input type="text" id="settingClassName" class="form-input" placeholder="예: 3학년 2반">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">기본 학년 설정</label>
+                    <select id="settingDefaultGrade" class="form-input">
+                        <option value="">선택 안함</option>
+                        <option value="1">1학년</option>
+                        <option value="2">2학년</option>
+                        <option value="3">3학년</option>
+                        <option value="4">4학년</option>
+                        <option value="5">5학년</option>
+                        <option value="6">6학년</option>
+                    </select>
+                    <small style="color: #888;">학생 추가나 워크시트 생성 시 이 학년이 기본 선택됩니다.</small>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+                    설정 저장하기
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <section class="container mt-4 mb-5">
+        <!-- Welcome Section -->
+        <div class="glass-card mb-4" style="padding: 1rem 1.5rem; display: flex; align-items: center; gap: 1rem;">
+            <h2 id="welcomeMessage" style="margin: 0; font-size: 1.5rem;"></h2>
+            <div style="width: 1px; height: 20px; background: #ccc;"></div>
+            <p class="card-text" style="margin: 0; font-size: 1rem;">학생들의 학습을 관리하고 지원하세요 📊</p>
+            <div
+                style="margin-left: auto; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: var(--primary-600); border-radius: var(--radius-md);">
+                <span style="font-size: 0.875rem; color: var(--text-secondary);">선생님 코드</span>
+                <span id="teacherCode"
+                    style="font-size: 1.25rem; font-weight: bold; color: var(--text-primary); font-family: monospace;"></span>
+                <button id="copyCodeBtn" onclick="copyTeacherCode()"
+                    style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border: 1px solid var(--primary-400); background: transparent; color: var(--text-primary); border-radius: var(--radius-sm); cursor: pointer;">
+                    복사
+                </button>
+            </div>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="grid grid-4 mb-4">
+            <div class="card stats-card" style="padding: 1rem;">
+                <div class="stats-number" id="totalStudents" style="font-size: 2rem; margin-bottom: 0;">0</div>
+                <div class="stats-label" style="font-size: 0.9rem;">전체 학생</div>
+            </div>
+
+            <div class="card stats-card" style="padding: 1rem;">
+                <div class="stats-number" id="activeToday" style="font-size: 2rem; margin-bottom: 0;">0</div>
+                <div class="stats-label" style="font-size: 0.9rem;">오늘 활동</div>
+            </div>
+
+            <div class="card stats-card" style="padding: 1rem;">
+                <div class="stats-number" id="totalVocab" style="font-size: 2rem; margin-bottom: 0;">0</div>
+                <div class="stats-label" style="font-size: 0.9rem;">어휘 수</div>
+            </div>
+
+            <div class="card stats-card" style="padding: 1rem;">
+                <div class="stats-number" id="avgProgress" style="font-size: 2rem; margin-bottom: 0;">0%</div>
+                <div class="stats-label" style="font-size: 0.9rem;">평균 진도</div>
+            </div>
+        </div>
+
+
+
+        </div>
+
+        <!-- Today's Learning Status -->
+        <!-- Today's Learning Status -->
+        <div class="glass-card mb-4">
+            <!-- Calendar Strip -->
+            <div class="calendar-strip mb-3" id="calendarStrip"
+                style="display: grid; grid-template-columns: repeat(14, 1fr); gap: 0px; row-gap: 0px;">
+                <!-- Filled by JS -->
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2 style="margin:0; font-size: 1.5rem;" id="learningStatusTitle">📅 오늘의 학습 현황</h2>
+                <div style="font-size: 0.9rem; color: #ccc;" id="learningStatusDate">${new Date().toLocaleDateString()}
+                    기준</div>
+            </div>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; color: #eee;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid rgba(255,255,255,0.2); text-align: left;">
+                            <th style="padding: 12px;">학생 이름</th>
+                            <th style="padding: 12px; text-align: center;">접속</th>
+                            <th style="padding: 12px; text-align: center;">플래시카드</th>
+                            <th style="padding: 12px; text-align: center;">따라쓰기</th>
+                            <th style="padding: 12px; text-align: center;">문장만들기</th>
+                            <th style="padding: 12px; text-align: center; color: #ff9a9e;">미제출</th>
+                            <th style="padding: 12px; text-align: center; color: #4facfe;">제출</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dailyProgressTable">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <h2 class="mb-3">⚡ 빠른 작업</h2>
+        <div class="grid grid-3 mb-4">
+            <div class="card" style="cursor: pointer;" onclick="showWorksheetModal()">
+                <div style="font-size: 3rem; text-align: center; margin-bottom: 1rem;">📝</div>
+                <h3 class="card-title">워크시트 생성</h3>
+                <p class="card-text">
+                    학년별 맞춤 워크시트를 자동으로 생성합니다.
+                </p>
+                <span class="badge badge-success">사용가능</span>
+            </div>
+
+            <div class="card" style="cursor: pointer;" onclick="showQuizModal()">
+                <div style="font-size: 3rem; text-align: center; margin-bottom: 1rem;">🎯</div>
+                <h3 class="card-title">퀴즈 생성</h3>
+                <p class="card-text">
+                    선택한 어휘로 퀴즈를 자동 생성하고 배포합니다.
+                </p>
+                <span class="badge badge-primary">사용가능</span>
+            </div>
+
+            <div class="card" style="cursor: pointer;" onclick="showVocabularyManager()">
+                <div style="font-size: 3rem; text-align: center; margin-bottom: 1rem;">📚</div>
+                <h3 class="card-title">어휘 관리</h3>
+                <p class="card-text">
+                    어휘를 추가, 수정, 삭제할 수 있습니다.
+                </p>
+                <span class="badge badge-success">사용가능</span>
+            </div>
+
+            <div class="card" style="cursor: pointer;" onclick="showSavedWorksheetsModal()">
+                <div style="font-size: 3rem; text-align: center; margin-bottom: 1rem;">📁</div>
+                <h3 class="card-title">저장된 학습지</h3>
+                <p class="card-text">
+                    이전에 생성한 학습지 목록을 확인하고 다시 인쇄합니다.
+                </p>
+                <span class="badge badge-primary">New</span>
+            </div>
+
+            <div class="card" style="cursor: pointer;" onclick="showDistributedWorksheets()">
+                <div style="font-size: 3rem; text-align: center; margin-bottom: 1rem;">📨</div>
+                <h3 class="card-title">배포 관리</h3>
+                <p class="card-text">
+                    학생들에게 배포한 학습지의 제출 현황을 확인하고 채점합니다.
+                </p>
+                <span class="badge badge-success">New</span>
+            </div>
+
+            <div class="card" style="cursor: pointer;" onclick="showStudentManagementModal()">
+                <div style="font-size: 3rem; text-align: center; margin-bottom: 1rem;">👥</div>
+                <h3 class="card-title">학생 관리</h3>
+                <p class="card-text">
+                    학생 목록을 확인하고 계정을 추가/관리합니다.
+                </p>
+                <span class="badge badge-primary">관리</span>
+            </div>
+            <div class="card" style="cursor: pointer;" onclick="showDailyPlanModal()">
+                <div style="font-size: 3rem; text-align: center; margin-bottom: 1rem;">📅</div>
+                <h3 class="card-title">오늘의 단어 관리</h3>
+                <p class="card-text">
+                    날짜별 학습 단어를 지정하고 수정합니다.
+                </p>
+                <span class="badge badge-primary">New</span>
+            </div>
+            <div class="card" style="cursor: pointer;" onclick="showCsvGeneratorModal()">
+                <div style="font-size: 3rem; text-align: center; margin-bottom: 1rem;">📝</div>
+                <h3 class="card-title">CSV 데이터 생성기</h3>
+                <p class="card-text">
+                    새 어휘 추가를 위한 CSV 형식의 데이터를 쉽게 생성합니다.
+                </p>
+                <span class="badge badge-success">Tool</span>
+            </div>
+        </div>
+
+        <!-- Daily Plan Manager Modal -->
+        <div class="modal-overlay" id="dailyPlanModal">
+            <div class="modal" style="position: relative; max-width: 600px;">
+                <button class="modal-close" onclick="closeDailyPlanModal()">×</button>
+                <div class="modal-header">
+                    <h2 class="modal-title">오늘의 단어 관리</h2>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">날짜 선택</label>
+                    <input type="date" id="planDate" class="form-input" onchange="loadPlanForEditor()">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">학년 선택</label>
+                    <select id="planGrade" class="form-input" onchange="loadPlanForEditor()">
+                        <option value="1">1학년</option>
+                        <option value="2">2학년</option>
+                        <option value="3">3학년</option>
+                        <option value="4">4학년</option>
+                        <option value="5">5학년</option>
+                        <option value="6">6학년</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem;">선택된 단어 (2개)</h3>
+                    <div id="planWordsList"
+                        style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem;">
+                        <!-- Words will be injected here -->
+                        <div style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">단어를 불러오는
+                            중...</div>
+                    </div>
+                    <button onclick="openWordSearchForPlan()" class="btn btn-outline btn-sm" style="width: 100%;">+ 단어
+                        변경/검색</button>
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="button" onclick="closeDailyPlanModal()" class="btn btn-outline" style="flex: 1;">
+                        닫기
+                    </button>
+                    <button type="button" onclick="savePlanFromEditor()" class="btn btn-primary" style="flex: 1;">
+                        저장하기
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Add Student Modal -->
+    <div class="modal-overlay" id="addStudentModal" style="z-index: 2000;">
+        <div class="modal" style="position: relative;">
+            <button class="modal-close" onclick="closeAddStudentModal()">×</button>
+            <div class="modal-header">
+                <h2 class="modal-title">학생 추가</h2>
+            </div>
+            <form id="addStudentForm">
+                <div class="form-group">
+                    <label class="form-label" for="studentName">이름</label>
+                    <input type="text" id="studentName" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="studentUsername">아이디</label>
+                    <input type="text" id="studentUsername" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="studentPassword">비밀번호</label>
+                    <input type="password" id="studentPassword" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="studentGrade">학년</label>
+                    <select id="studentGrade" class="form-input" required>
+                        <option value="">선택하세요</option>
+                        <option value="1">1학년</option>
+                        <option value="2">2학년</option>
+                        <option value="3">3학년</option>
+                        <option value="4">4학년</option>
+                        <option value="5">5학년</option>
+                        <option value="6">6학년</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 1rem;">
+                    <button type="button" onclick="closeAddStudentModal()" class="btn btn-outline" style="flex: 1;">
+                        취소
+                    </button>
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">
+                        추가하기
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Vocabulary Manager Modal -->
+    <div class="modal-overlay" id="vocabModal">
+        <div class="modal" style="position: relative; max-width: 800px;">
+            <button class="modal-close" onclick="closeVocabModal()">×</button>
+            <div class="modal-header">
+                <h2 class="modal-title">어휘 관리</h2>
+            </div>
+            <div id="vocabContent">
+                <!-- Will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <!-- Config & Data Service -->
+    <script src="../js/firebase-config.js"></script>
+    <script src="../js/data-service.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/hanja-data.js"></script>
+    <script src="../js/hanja-compounds.js"></script>
+    <script src="../js/vocab-data.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
+    <script src="../js/worksheet-renderer.js"></script>
+    <script>
+        // Check authentication
+        if (!auth.requireAuth('teacher')) {
+            window.location.href = 'login.html';
+        }
+
+        const user = auth.getCurrentUser();
+        document.getElementById('welcomeMessage').textContent = `환영합니다, ${user.name}님! 👋`;
+        document.getElementById('userName').textContent = user.name;
+
+        // Display teacher code
+        if (user.teacherCode) {
+            document.getElementById('teacherCode').textContent = user.teacherCode;
+        }
+
+        // Function to copy teacher code to clipboard
+        function copyTeacherCode() {
+            const code = user.teacherCode;
+            if (code) {
+                navigator.clipboard.writeText(code).then(() => {
+                    const btn = document.getElementById('copyCodeBtn');
+                    const originalText = btn.textContent;
+                    btn.textContent = '복사됨!';
+                    btn.style.background = 'var(--success-500)';
+                    setTimeout(() => {
+                        btn.textContent = originalText;
+                        btn.style.background = 'transparent';
+                    }, 2000);
+                }).catch(err => {
+                    alert('코드 복사에 실패했습니다.');
+                });
+            }
+        }
+
+        // Load dashboard data
+        async function loadDashboard() {
+            const students = await auth.getStudents();
+
+            // Update stats
+            document.getElementById('totalStudents').textContent = students.length;
+            document.getElementById('totalVocab').textContent = vocabDB.vocabulary.length;
+
+            // Calculate average progress
+            if (students.length > 0) {
+                const totalProgress = students.reduce((sum, student) => {
+                    const progress = student.progress || {};
+                    return sum + (progress.flashcardsCompleted || 0) +
+                        (progress.typingCompleted || 0) +
+                        (progress.writingCompleted || 0);
+                }, 0);
+                const avgProgress = Math.round(totalProgress / students.length / 3);
+                document.getElementById('avgProgress').textContent = avgProgress + '%';
+            }
+
+            // Render Daily Progress
+            initCalendar();
+            await renderDailyProgress();
+        }
+
+        // Calendar & Daily Selection
+        let selectedDate = new Date();
+        let currentCalendarDate = new Date(); // Track displayed month
+
+        function changeMonth(offset) {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + offset);
+            initCalendar();
+        }
+
+        function selectDate(dateStr) {
+            selectedDate = new Date(dateStr);
+            // Don't auto-jump calendar if selecting a date (unless we want to? e.g. if we pick from another view).
+            // But here we pick FROM calendar mostly.
+            initCalendar();
+            renderDailyProgress(selectedDate);
+
+            // Update Title Date
+            const options = { month: 'long', day: 'numeric', weekday: 'long' };
+            const formatted = selectedDate.toLocaleDateString('ko-KR', options);
+            document.getElementById('learningStatusDate').textContent = `${formatted} 기준`;
+        }
+
+        function initCalendar() {
+            const calendarStrip = document.getElementById('calendarStrip');
+            if (!calendarStrip) return;
+
+            const today = new Date();
+
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth(); // 0-indexed
+
+            // Get days in month
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const firstDayDow = new Date(year, month, 1).getDay(); // 0(Sun) to 6(Sat)
+
+            let html = '';
+
+            // Add Month Header with Nav
+            html += `<div style="grid-column: 1 / -1; display: flex; justify-content: center; align-items: center; gap: 1rem; margin-bottom: 5px; color: var(--text-primary); font-size: 1.1rem;">
+                <button onclick="changeMonth(-1)" class="btn btn-sm btn-outline" style="padding: 2px 8px; border: none; background: rgba(255,255,255,0.1);">◀</button>
+                <span style="font-weight: bold;">${year}년 ${month + 1}월</span>
+                <button onclick="changeMonth(1)" class="btn btn-sm btn-outline" style="padding: 2px 8px; border: none; background: rgba(255,255,255,0.1);">▶</button>
+            </div>`;
+
+            // Header Row (Days of Week x 2 for 14 cols)
+            const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+            dayNames.push(...dayNames);
+
+            dayNames.forEach(name => {
+                html += `<div style="text-align: center; font-size: 0.9rem; font-weight: bold; color: var(--text-secondary); padding-bottom: 0px;">${name}</div>`;
+            });
+
+            // Spacers for 1st day alignment
+            for (let i = 0; i < firstDayDow; i++) {
+                html += `<div></div>`;
+            }
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                // Check if matches today
+                const isToday = (d === today.getDate() && month === today.getMonth() && year === today.getFullYear());
+                // Check if matches selected
+                const isSelected = (d === selectedDate.getDate() && month === selectedDate.getMonth() && year === selectedDate.getFullYear());
+
+                // Base style
+                let style = 'width: 100%; display: flex; align-items: center; justify-content: center; padding: 0px; aspect-ratio: 1.6; border: none; background: transparent; color: var(--text-primary); cursor: pointer; border-radius: 4px;';
+
+                if (isSelected) {
+                    style += ' background: var(--primary-color); color: white;';
+                }
+
+                if (isToday) {
+                    style = style.replace('border: none;', '');
+                    style += ` border: 2px solid ${isSelected ? 'white' : 'var(--accent-color, #ff6b6b)'}; box-shadow: 0 0 0 1px ${isSelected ? 'transparent' : 'var(--accent-color, #ff6b6b)'};`;
+                }
+
+                html += `
+                    <button onclick="selectDate('${year}-${month + 1}-${d}')" style="${style}">
+                        <span style="font-weight: bold; font-size: 1.1rem;">${d}</span>
+                    </button>
+                `;
+            }
+
+            calendarStrip.innerHTML = html;
+        }
+
+        async function renderDailyProgress(targetDate = new Date()) {
+            const tableBody = document.getElementById('dailyProgressTable');
+            if (!tableBody) return;
+
+            // Use auth.getStudents() to filter by teacher
+            const students = await auth.getStudents();
+            const history = await dbService.getAllStudyHistory();
+            const assignments = await dbService.getAssignments();
+            const submissions = await dbService.getSubmissions();
+
+            // Target Date Range (00:00 to 23:59)
+            const startOfDay = new Date(targetDate);
+            startOfDay.setHours(0, 0, 0, 0);
+
+            const endOfDay = new Date(targetDate);
+            endOfDay.setHours(23, 59, 59, 999);
+
+            if (students.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="7" style="padding: 20px; text-align: center; color: #999;">학생이 없습니다.</td></tr>';
+                return;
+            }
+
+            const html = students.map(student => {
+                // Access Status & Activities (Target Date)
+                const studentHistory = history.filter(h => {
+                    // Check userId
+                    const isUser = (h.userId === student.id || h.userId === student.username);
+                    const hDate = new Date(h.timestamp);
+                    return isUser && hDate >= startOfDay && hDate <= endOfDay;
+                });
+
+                const isLoggedIn = studentHistory.length > 0;
+                const accessStatus = isLoggedIn ? '<span style="color: #4facfe;">● 접속</span>' : '<span style="color: #666;">○ 미접속</span>';
+
+                const flashcardCount = studentHistory.filter(h => h.type === 'flashcard').length;
+                const typingCount = studentHistory.filter(h => h.type === 'typing').length;
+                const writingCount = studentHistory.filter(h => h.type === 'writing').length;
+
+                // Submissions (Total Pending/Submitted is weird for "Daily" view, but maybe "Submitted Today"?)
+                // The table headers are "Pending" and "Submitted". Usually implies ALL time or current status.
+                // If the user scrolls back to yesterday, should "Pending" show yesterday's pending? 
+                // Assignment status is stateful, not historical usually.
+                // But submissions have timestamp.
+                // Let's keep Unsubmitted as current total (state) but maybe highlight submissions from THAT day?
+                // Or just show total. The request is "Learning Status".
+                // I will show Total Unsubmitted (Current) and Total Submitted (Current).
+                // Or "Submitted ON that day"?
+                // "제출" col usually means count.
+                // Let's count submissions made ON that date.
+
+                const mySubmissions = submissions.filter(s => {
+                    const sDate = new Date(s.timestamp || 0); // submissions usually have timestamp
+                    // If submission doesn't have timestamp (local impl might miss it?), assume no match if filtering by date.
+                    // But our saveSubmission usually adds date? 
+                    // Let's check logic. dbService doesn't enforce timestamp in saveSubmission but it's good practice.
+                    // Assuming saveSubmission adds it or the logic creating usage adds it.
+                    // For now, let's filter mySubmissions by Student first.
+                    let isMySub = false;
+                    if (s.studentId) isMySub = (s.studentId === student.id || s.studentId === student.username);
+                    else isMySub = (s.studentName === student.name);
+
+                    if (!isMySub) return false;
+
+                    if (s.submittedAt || s.timestamp) {
+                        const d = new Date(s.submittedAt || s.timestamp);
+                        return d >= startOfDay && d <= endOfDay;
+                    }
+                    return false;
+                });
+
+                const totalAssignments = assignments.length;
+                // Unsubmitted is "Total Assigned - Total Submitted Ever" usually.
+                // Showing "Unsubmitted" for a past date is confusing. 
+                // I will show "Submitted Today: X". 
+                // Unsubmitted: Just show current Pending? Or "-" if past date?
+                // Let's keep it simple: Show assignments submitted ON that day. Use ' - ' for unsubmitted column if strictly daily view, or just show current backlog.
+                // User probably wants to see "Did they do the work THAT day?"
+                // I will show "Submission Count (That Day)".
+
+                const submittedCount = mySubmissions.length;
+
+                return `
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                        <td style="padding: 12px; font-weight: 500;">${student.name}</td>
+                        <td style="padding: 12px; text-align: center;">${accessStatus}</td>
+                        <td style="padding: 12px; text-align: center;">${flashcardCount > 0 ? '✅' : '<span style="color:#666">-</span>'}</td>
+                        <td style="padding: 12px; text-align: center;">${typingCount > 0 ? '✅' : '<span style="color:#666">-</span>'}</td>
+                        <td style="padding: 12px; text-align: center;">${writingCount > 0 ? '✅' : '<span style="color:#666">-</span>'}</td>
+                        <td style="padding: 12px; text-align: center;"><span style="color: #666;">-</span></td>
+                        <td style="padding: 12px; text-align: center;"><span style="color: #4facfe; font-weight: bold;">${submittedCount}건</span></td>
+                    </tr>
+                `;
+            }).join('');
+
+            tableBody.innerHTML = html;
+        }
+
+        // Load students list
+        function loadStudentsList() {
+            const students = auth.getStudents();
+            const studentsListDiv = document.getElementById('studentsList');
+
+            if (students.length === 0) {
+                studentsListDiv.innerHTML = `
+                    <p class="card-text text-center" style="padding: 2rem;">
+                        아직 등록된 학생이 없습니다. 학생을 추가해보세요!
+                    </p>
+                `;
+                return;
+            }
+
+            let html = '<div style="display: flex; flex-direction: column; gap: 1rem;">';
+
+            students.forEach(student => {
+                const progress = student.progress || {};
+                const totalCompleted = (progress.flashcardsCompleted || 0) +
+                    (progress.typingCompleted || 0) +
+                    (progress.writingCompleted || 0);
+
+                html += `
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 1rem;">
+                            <div style="flex: 1;">
+                                <h3>${student.name}</h3>
+                                <p class="card-text">
+                                    <span class="badge badge-primary">${student.grade}학년</span>
+                                    <span style="margin-left: 0.5rem; color: var(--text-muted);">
+                                        아이디: ${student.username}
+                                    </span>
+                                </p>
+                                <div style="margin-top: 1rem; display: flex; gap: 2rem; flex-wrap: wrap;">
+                                    <div>
+                                        <div style="font-size: 0.875rem; color: var(--text-muted);">플래시카드</div>
+                                        <div style="font-weight: 600;">${progress.flashcardsCompleted || 0}개</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 0.875rem; color: var(--text-muted);">타이핑</div>
+                                        <div style="font-weight: 600;">${progress.typingCompleted || 0}개</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 0.875rem; color: var(--text-muted);">문장 만들기</div>
+                                        <div style="font-weight: 600;">${progress.writingCompleted || 0}개</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 0.875rem; color: var(--text-muted);">총 학습</div>
+                                        <div style="font-weight: 600; color: var(--primary-500);">${totalCompleted}개</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button onclick="viewStudentDetail('${student.id}')" class="btn btn-sm btn-outline">
+                                    상세보기
+                                </button>
+                                <button onclick="deleteStudent('${student.id}', '${student.name}')" class="btn btn-sm btn-secondary">
+                                    삭제
+                                </button>
+                            </div>
+                        </div>
+                        <div class="progress-bar mt-3">
+                            <div class="progress-fill" style="width: ${Math.min(totalCompleted, 100)}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            studentsListDiv.innerHTML = html;
+        }
+
+        let editingStudentId = null;
+
+        // Show add student modal
+        function showAddStudentModal() {
+            editingStudentId = null;
+            document.getElementById('addStudentModal').classList.add('active');
+            document.querySelector('#addStudentModal .modal-title').textContent = '학생 추가';
+            document.querySelector('#addStudentForm button[type="submit"]').textContent = '추가하기';
+            document.getElementById('studentUsername').readOnly = false;
+        }
+
+        // Show edit student modal
+        window.showEditStudentModal = async function (username) {
+            // alert('Edit Triggered: ' + username); // Debug
+            try {
+                await dbService.init();
+                const users = await dbService.getUsers();
+                const student = users.find(u => u.username === username);
+
+                if (!student) {
+                    alert('학생 정보를 찾을 수 없습니다: ' + username);
+                    return;
+                }
+
+                editingStudentId = student.id;
+
+                document.getElementById('studentName').value = student.name;
+                document.getElementById('studentUsername').value = student.username;
+                document.getElementById('studentPassword').value = student.password || '';
+                document.getElementById('studentGrade').value = student.grade;
+
+                // Allow ID modification
+                document.getElementById('studentUsername').readOnly = false;
+
+                document.getElementById('addStudentModal').classList.add('active');
+                document.querySelector('#addStudentModal .modal-title').textContent = '학생 정보 수정';
+                document.querySelector('#addStudentForm button[type="submit"]').textContent = '수정 저장';
+            } catch (e) {
+                console.error('Error showing edit modal:', e);
+                alert('수정 창을 여는 중 오류가 발생했습니다.');
+            }
+        }
+
+        // Close add student modal
+        function closeAddStudentModal() {
+            document.getElementById('addStudentModal').classList.remove('active');
+            document.getElementById('addStudentForm').reset();
+            editingStudentId = null;
+        }
+
+        // Add/Edit student form submit
+        document.getElementById('addStudentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const name = document.getElementById('studentName').value;
+            const username = document.getElementById('studentUsername').value;
+            const password = document.getElementById('studentPassword').value;
+            const grade = document.getElementById('studentGrade').value;
+
+            try {
+                if (editingStudentId) {
+                    // Update
+                    const updates = {
+                        id: editingStudentId,
+                        name, username, password, grade: parseInt(grade)
+                    };
+                    await dbService.saveUser(updates);
+                    alert('학생 정보가 수정되었습니다.');
+                } else {
+                    // Create
+                    await auth.createStudent({ name, username, password, grade });
+                    alert('학생이 추가되었습니다.');
+                }
+
+                closeAddStudentModal();
+                loadDashboard();
+
+                // Refresh modal list if open
+                if (document.getElementById('studentManagementModal').classList.contains('active')) {
+                    renderStudentListInModal();
+                }
+            } catch (e) {
+                console.error(e);
+                alert('오류가 발생했습니다.');
+            }
+        });
+
+        function viewStudentDetail(studentId) {
+            alert('학생 상세보기 기능은 곧 출시됩니다!');
+        }
+
+        // Consolidated deleteStudent is defined at the bottom of the file (override).
+
+
+        // Show vocabulary manager
+        function showVocabularyManager() {
+            const modal = document.getElementById('vocabModal');
+            const content = document.getElementById('vocabContent');
+
+            let html = `
+                <div style="margin-bottom: 1rem; display: flex; gap: 0.5rem;">
+                    <select id="vocabFilterGrade" class="form-input" style="width: 120px;" onchange="searchVocabulary()">
+                         <option value="">전체 학년</option>
+                         <option value="1">1학년</option>
+                         <option value="2">2학년</option>
+                         <option value="3">3학년</option>
+                         <option value="4">4학년</option>
+                         <option value="5">5학년</option>
+                         <option value="6">6학년</option>
+                    </select>
+                    <input 
+                        type="text" 
+                        id="vocabSearch" 
+                        class="form-input" 
+                        placeholder="어휘 검색..."
+                        onkeyup="searchVocabulary()"
+                    >
+                </div>
+                <div style="max-height: 400px; overflow-y: auto;" id="vocabList">
+                    <!-- Populated by searchVocabulary -->
+                </div>
+            `;
+
+            html += `
+                <div class="mt-3">
+                    <button onclick="showAddVocabForm()" class="btn btn-primary" style="width: 100%;">
+                        + 새 어휘 추가
+                    </button>
+                </div>
+            `;
+
+            content.innerHTML = html;
+            modal.classList.add('active');
+
+            // Initial Render
+            searchVocabulary();
+        }
+
+        // Show Add Vocabulary Form
+        function showAddVocabForm() {
+            const content = document.getElementById('vocabContent');
+
+            content.innerHTML = `
+                <div style="padding: 0.5rem;">
+                    <button onclick="showVocabularyManager()" class="btn btn-sm btn-outline mb-3">
+                        ← 목록으로 돌아가기
+                    </button>
+                    <h3 class="mb-3" id="vocabFormTitle">새 어휘 추가</h3>
+                    <input type="hidden" id="editVocabId">
+                    
+                    <div style="background: #333; padding: 1rem; border-radius: 8px; margin-bottom: 2rem;">
+                         <h4 style="margin-bottom: 0.5rem; color: var(--accent-color);">📂 CSV 데이터로 한번에 입력하기</h4>
+                         <p style="font-size: 0.8rem; color: #ccc; margin-bottom: 0.5rem;">
+                            형식: <strong>단어, 한자, 뜻, 학년, 카테고리, 예문( | 로 구분)</strong><br>
+                            예시: <code>학교, 學校, 배우는 곳, 1, 생활, 예문1|예문2</code>
+                         </p>
+                         <textarea id="csvInput" class="form-input" style="height: 60px; font-family: monospace;" placeholder="여기에 CSV 데이터를 붙여넣으세요..."></textarea>
+                         <button onclick="parseAndAddCSV()" class="btn btn-sm btn-outline" style="margin-top: 0.5rem; width: 100%; border-color: var(--accent-color); color: var(--accent-color);">
+                            CSV 데이터 적용 (여러 줄 가능)
+                         </button>
+                    </div>
+                    
+                    <hr style="border-color: #444; margin-bottom: 2rem;">
+                    
+                    <h4 class="mb-3">✍️ 개별 입력</h4>
+                    
+                    <div class="form-group">
+                        <label class="form-label">단어 (한글)</label>
+                        <input type="text" id="newVocabWord" class="form-input" placeholder="예: 약속">
+                    </div>
+                    
+                     <div class="form-group">
+                        <label class="form-label">한자 (선택)</label>
+                        <input type="text" id="newVocabHanja" class="form-input" placeholder="예: 約束">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">뜻</label>
+                        <input type="text" id="newVocabMeaning" class="form-input" placeholder="단어의 뜻을 입력하세요">
+                    </div>
+                    
+                    <div class="grid grid-2" style="gap: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label">학년</label>
+                            <select id="newVocabGrade" class="form-input">
+                                <option value="1">1학년</option>
+                                <option value="2">2학년</option>
+                                <option value="3">3학년</option>
+                                <option value="4">4학년</option>
+                                <option value="5">5학년</option>
+                                <option value="6">6학년</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">카데고리</label>
+                            <input type="text" id="newVocabCategory" class="form-input" list="categoryList" placeholder="예: 생활">
+                            <datalist id="categoryList">
+                                <option value="국어">
+                                <option value="수학">
+                                <option value="사회">
+                                <option value="과학">
+                                <option value="도덕">
+                                <option value="생활">
+                            </datalist>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">예문 (줄바꿈으로 구분)</label>
+                        <textarea id="newVocabExamples" class="form-input" style="height: 100px;" placeholder="예문 1&#10;예문 2&#10;예문 3"></textarea>
+                    </div>
+                    
+                    <button onclick="saveNewVocab()" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+                        저장하기
+                    </button>
+                </div>
+            `;
+        }
+
+        function parseAndAddCSV() {
+            const raw = document.getElementById('csvInput').value.trim();
+            if (!raw) return;
+
+            const lines = raw.split('\n');
+            let addedCount = 0;
+
+            // If single line, ask to pre-fill
+            if (lines.length === 1 && confirm("한 줄의 데이터입니다. 입력 폼에 채우시겠습니까? (취소 시 자동 저장)")) {
+                const parts = lines[0].split(',').map(s => s.trim());
+                if (parts.length >= 1) document.getElementById('newVocabWord').value = parts[0];
+                if (parts.length >= 2) document.getElementById('newVocabHanja').value = parts[1];
+                if (parts.length >= 3) document.getElementById('newVocabMeaning').value = parts[2];
+                if (parts.length >= 4) document.getElementById('newVocabGrade').value = parts[3].replace(/[^0-9]/g, '');
+                if (parts.length >= 5) document.getElementById('newVocabCategory').value = parts[4];
+                if (parts.length >= 6) document.getElementById('newVocabExamples').value = parts[5].split('|').join('\n');
+                return;
+            }
+
+            // Bulk Add
+            if (!confirm(`총 ${lines.length}개의 단어를 추가하시겠습니까?`)) return;
+
+            lines.forEach(line => {
+                const parts = line.split(',').map(s => s.trim());
+                if (parts.length < 3) return;
+
+                const examples = parts[5] ? parts[5].split('|').map(e => e.trim()) : [];
+
+                const newVocab = {
+                    id: 'custom_' + Date.now() + Math.random().toString(36).substr(2, 5),
+                    word: parts[0],
+                    hanja: parts[1] || '',
+                    meaning: parts[2],
+                    grade: parseInt(parts[3]) || 1,
+                    category: parts[4] || '기타',
+                    examples: examples
+                };
+
+                vocabDB.vocabulary.push(newVocab);
+                addedCount++;
+            });
+
+            vocabDB.save();
+            alert(`${addedCount}개 단어가 추가되었습니다.`);
+            showVocabularyManager();
+        }
+
+        // Save New or Edited Vocabulary
+        function saveNewVocab() {
+            const id = document.getElementById('editVocabId').value;
+            const word = document.getElementById('newVocabWord').value.trim();
+            const hanja = document.getElementById('newVocabHanja').value.trim();
+            const meaning = document.getElementById('newVocabMeaning').value.trim();
+            const grade = parseInt(document.getElementById('newVocabGrade').value);
+            const category = document.getElementById('newVocabCategory').value.trim();
+            const examplesText = document.getElementById('newVocabExamples').value.trim();
+
+            if (!word || !meaning || !category) {
+                alert('단어, 뜻, 카테고리는 필수 입력 항목입니다.');
+                return;
+            }
+
+            const examples = examplesText ? examplesText.split('\n').map(e => e.trim()).filter(e => e) : [];
+
+            const vocabData = {
+                word: word,
+                hanja: hanja || '',
+                meaning: meaning,
+                grade: grade,
+                category: category,
+                examples: examples
+            };
+
+            if (id) {
+                // Update existing
+                const index = vocabDB.vocabulary.findIndex(v => v.id === id);
+                if (index !== -1) {
+                    vocabDB.vocabulary[index] = { ...vocabDB.vocabulary[index], ...vocabData };
+                    alert('수정되었습니다.');
+                }
+            } else {
+                // Create new
+                const newId = 'custom_' + Date.now();
+                vocabDB.vocabulary.push({ id: newId, ...vocabData });
+                alert(`'${word}' 단어가 추가되었습니다.`);
+            }
+
+            vocabDB.save();
+            showVocabularyManager();
+        }
+
+        function editVocab(id) {
+            const vocab = vocabDB.vocabulary.find(v => v.id === id);
+            if (!vocab) return;
+
+            showAddVocabForm();
+
+            // Populate Form
+            document.getElementById('vocabFormTitle').textContent = "어휘 수정";
+            document.getElementById('editVocabId').value = vocab.id;
+            document.getElementById('newVocabWord').value = vocab.word;
+            document.getElementById('newVocabHanja').value = vocab.hanja || '';
+            document.getElementById('newVocabMeaning').value = vocab.meaning;
+            document.getElementById('newVocabGrade').value = vocab.grade;
+            document.getElementById('newVocabCategory').value = vocab.category;
+            if (vocab.examples && vocab.examples.length > 0) {
+                document.getElementById('newVocabExamples').value = vocab.examples.join('\n');
+            }
+        }
+
+        function deleteVocab(id) {
+            if (!confirm("정말 이 단어를 삭제하시겠습니까? (복구할 수 없습니다)")) return;
+
+            vocabDB.vocabulary = vocabDB.vocabulary.filter(v => v.id !== id);
+            vocabDB.save();
+            searchVocabulary(); // Refresh list
+        }
+
+        // Close vocab modal
+        function closeVocabModal() {
+            document.getElementById('vocabModal').classList.remove('active');
+        }
+
+        // Search vocabulary with Grade Filter
+        function searchVocabulary() {
+            const searchTerm = document.getElementById('vocabSearch').value.toLowerCase();
+            const gradeFilter = document.getElementById('vocabFilterGrade').value;
+
+            const results = vocabDB.vocabulary.filter(vocab => {
+                // Filter by Grade
+                if (gradeFilter && vocab.grade != gradeFilter) return false;
+
+                // Filter by Search
+                if (!searchTerm) return true;
+                return vocab.word.includes(searchTerm) ||
+                    vocab.meaning.toLowerCase().includes(searchTerm) ||
+                    (vocab.hanja && vocab.hanja.includes(searchTerm));
+            });
+
+            const listDiv = document.getElementById('vocabList');
+            let html = '';
+
+            results.forEach(vocab => {
+                html += `
+                    <div class="card mb-3" style="display: flex; justify-content: space-between; align-items: start;">
+                        <div>
+                            <h4>${vocab.word} (${vocab.hanja || ''})</h4>
+                            <p class="card-text">${vocab.meaning}</p>
+                            <div class="mt-2">
+                                <span class="badge badge-primary">${vocab.grade}학년</span>
+                                <span class="badge badge-success">${vocab.category}</span>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn btn-sm btn-outline" onclick="editVocab('${vocab.id}')">수정</button>
+                            <button class="btn btn-sm btn-outline" style="color: #e00; border-color: #e00;" onclick="deleteVocab('${vocab.id}')">삭제</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            if (results.length === 0) {
+                html = '<p class="card-text text-center" style="padding: 2rem; color: #888;">검색 결과가 없습니다.</p>';
+            }
+
+            listDiv.innerHTML = html;
+        }
+
+        // Close modals when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal-overlay')) {
+                e.target.classList.remove('active');
+            }
+        });
+
+        // Initialize
+        loadDashboard();
+
+        // Worksheet Modal Functions
+        function showWorksheetModal() {
+            document.getElementById('worksheetModal').classList.add('active');
+            updateWorksheetVocabList();
+        }
+
+        function closeWorksheetModal() {
+            document.getElementById('worksheetModal').classList.remove('active');
+        }
+
+        function updateWorksheetVocabList() {
+            const grade = document.getElementById('worksheetGrade').value;
+            const searchInput = document.getElementById('worksheetSearch');
+            const search = searchInput ? searchInput.value.toLowerCase() : '';
+            const listContainer = document.getElementById('worksheetVocabList');
+
+            if (!listContainer) return;
+
+            let filtered = vocabDB.vocabulary;
+            if (grade) {
+                filtered = filtered.filter(v => v.grade == grade);
+            }
+            if (search) {
+                filtered = filtered.filter(v =>
+                    v.word.includes(search) ||
+                    v.meaning.toLowerCase().includes(search)
+                );
+            }
+
+            // Keep checked state
+            const currentlyChecked = Array.from(listContainer.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+
+            let html = '';
+            if (filtered.length === 0) {
+                html = '<div style="padding: 1rem; text-align: center; color: #666;">검색 결과가 없습니다.</div>';
+            } else {
+                filtered.forEach(v => {
+                    const isChecked = currentlyChecked.includes(v.id) ? 'checked' : '';
+                    html += `
+                        <label class="vocab-checkbox-item">
+                            <input type="checkbox" name="worksheetVocab" value="${v.id}" ${isChecked} onchange="updateSelectedCount()">
+                            <span class="vocab-text">${v.word}</span>
+                        </label>
+                    `;
+                });
+            }
+            listContainer.innerHTML = html;
+            updateSelectedCount();
+        }
+
+        function toggleSelectAll() {
+            const checkboxes = document.querySelectorAll('#worksheetVocabList input[type="checkbox"]');
+            if (checkboxes.length === 0) return;
+
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            checkboxes.forEach(cb => cb.checked = !allChecked);
+            updateSelectedCount();
+        }
+
+        function updateSelectedCount() {
+            const count = document.querySelectorAll('input[name="worksheetVocab"]:checked').length;
+            const counter = document.getElementById('selectedCount');
+            if (counter) counter.textContent = count > 0 ? `${count}개 선택됨` : '랜덤 생성';
+        }
+
+        function generateWorksheet(arg = null) {
+            let vocabList = [];
+            let title = '';
+            let type = '';
+            let restoreData = null;
+
+            // Check if arg is restore data (object) or type (string)
+            const isRestore = arg && typeof arg === 'object';
+            const isNewType = arg && typeof arg === 'string';
+
+            if (isRestore) {
+                // Restore mode
+                restoreData = arg;
+                const vocabIds = restoreData.vocabIds;
+                vocabList = vocabDB.vocabulary.filter(v => vocabIds.includes(v.id));
+                title = restoreData.title;
+                type = restoreData.type;
+            } else if (isNewType) {
+                // New generation mode from Buttons
+                type = arg;
+
+                const checkboxes = document.querySelectorAll('.vocab-checkbox-item input[type="checkbox"]:checked');
+                if (checkboxes.length === 0) {
+                    alert('선택된 단어가 없습니다.');
+                    return;
+                }
+                const selectedIds = Array.from(checkboxes).map(cb => cb.value);
+                // Preserve order based on vocabDB
+                vocabList = vocabDB.vocabulary.filter(v => selectedIds.includes(v.id));
+
+                if (type === 'meaning') {
+                    title = '어휘 뜻 따라쓰기';
+                } else if (type === 'sentence') {
+                    title = '어휘 용례 따라쓰기';
+                } else if (type === 'hanja') {
+                    title = '한자 쓰기 연습';
+                } else if (type === 'quiz') {
+                    title = '어휘 쪽지 시험';
+                }
+            } else {
+                return; // Should not happen
+            }
+
+            // Use the Shared Renderer
+            const result = WorksheetRenderer.generate(type, vocabList);
+            const content = result.content;
+            const writerScript = result.writerScript;
+
+            // Save to LocalStorage (if new)
+            if (!isRestore) {
+                const worksheetData = {
+                    id: Date.now(),
+                    title: title,
+                    type: type,
+                    vocabIds: vocabList.map(v => v.id),
+                    createdAt: new Date().toISOString(),
+                    dateStr: new Date().toLocaleString('ko-KR')
+                };
+                const savedWorksheets = JSON.parse(localStorage.getItem('savedWorksheets') || '[]');
+                savedWorksheets.unshift(worksheetData);
+                localStorage.setItem('savedWorksheets', JSON.stringify(savedWorksheets));
+            }
+
+            printWorksheet(title, content, writerScript);
+        }
+
+        function printWorksheet(title, content, extraScript = '') {
+            const fullHtml = `
+                <!DOCTYPE html>
+                <html>
+                <script>
+                    window.onafterprint = function() {
+                        // Ensure window stays open and content remains
+                        console.log("Print dialog closed.");
+                    };
+                <\/script>
+
+    <head>
+        <title>${title} - 어휘나라 워크시트</title>
+        <link href="https://fonts.googleapis.com/css2?family=Gamja+Flower&family=Nanum+Gothic:wght@400;700&display=swap"
+            rel="stylesheet">
+        <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"><\/script>
+                    <style>
+                        body { font-family: 'Gamja Flower', cursive, sans-serif; padding: 20px; }
+                        h1 { margin: 0; font-size: 2rem; }
+                        .worksheet-section { margin-top: 10px; }
+                        .vocab-section-break { page-break-before: always; height: 1px; }
+                        .vocab-section-break:first-child { page-break-before: auto; }
+
+                        .vocab-header { font-size: 24px; margin-bottom: 10px; }
+                        .vocab-header.centered { text-align: center; margin-bottom: 30px; }
+                        .vocab-word { font-weight: bold; font-size: 28px; color: #333; }
+                        .vocab-hanja { color: #666; font-size: 24px; }
+                        .vocab-meaning-box { background: #f9f9f9; padding: 15px; border-radius: 5px; margin-bottom: 20px; font-size: 18px; }
+
+                        .sentences-list { display: flex; flex-direction: column; gap: 20px; }
+                        .sentence-item { break-inside: avoid; margin-bottom: 15px; }
+                        .sentence-text { font-size: 18px; margin-bottom: 10px; }
+                        .writing-line { border-bottom: 1px dashed #bbb; height: 30px; }
+
+                        .hanja-table { width: 100%; border-collapse: collapse; }
+                        .hanja-table th, .hanja-table td { border: 1px solid #ddd; padding: 15px; text-align: center; }
+                        .hanja-table th { background: #f5f5f5; }
+                        .vocab-hanja-large { font-size: 32px; font-weight: bold; }
+                        .hanja-writing-box { display: flex; gap: 10px; justify-content: center; }
+                        .writing-box { width: 40px; height: 40px; border: 1px solid #ccc; }
+
+                        /* Stroke Order Sequence Styles */
+                        .stroke-order-container {
+                            display: flex;
+                            flex-wrap: wrap;
+                            gap: 4px;
+                            margin: 10px 0 10px 0;
+                            border-top: 1px dashed #eee;
+                            padding-top: 10px;
+                        }
+                        .stroke-order-step {
+                            width: 40px;
+                            height: 40px;
+                            border: 1px solid #eee;
+                            background: #fff;
+                        }
+
+                        /* 15-cell Grid Styles */
+                        .vocab-15-section { margin-bottom: 15px; break-inside: avoid; }
+                        .vocab-info-header { display: flex; gap: 10px; margin-bottom: 5px; align-items: baseline; }
+                        .word-box { font-size: 24px; font-weight: bold; border: 2px solid #333; padding: 5px 15px; border-radius: 20px; background: #fffde7; }
+                        .hanja-box { font-size: 20px; color: #555; }
+
+                        .penmanship-grid-container {
+                            display: grid; grid-template-columns: repeat(15, 1fr);
+                            width: 100%; max-width: 100%;
+                            border-right: 1px solid #888;
+                            border-bottom: 1px solid #888;
+                            background: #fff;
+                        }
+                        .grid-row { display: contents; }
+                        .grid-cell {
+                            aspect-ratio: 1;
+                            border-left: 1px solid #888;
+                            border-top: 1px solid #888;
+                            display: flex; align-items: center; justify-content: center;
+                            font-size: 2.4rem; position: relative;
+                            color: #d0d0d0; /* Light Gray text */
+                        }
+
+                        /* Cross Dotted Line Guidelines in Cell */
+                        .grid-cell::before {
+                            content: ''; position: absolute; top: 50%; left: 0; right: 0;
+                            border-top: 1px dotted #ccc; z-index: 0;
+                        }
+                        .grid-cell::after {
+                            content: ''; position: absolute; left: 50%; top: 0; bottom: 0;
+                            border-left: 1px dotted #ccc; z-index: 0;
+                        }
+
+                        /* Text Layer */
+                        .grid-cell-text { z-index: 1; position: relative; font-family: 'Nanum Gothic', sans-serif; font-weight: 700; }
+
+                        /* Sentence Grid Modifier (90% Scale) */
+                        .sentence-grid .grid-cell { font-size: 2.1rem; }
+
+                        /* Hanja Grid Modifier (Max Size) */
+                        .hanja-grid .grid-cell { font-size: 3.8rem; line-height: 1; }
+
+                        /* Print Button Style */
+                        .print-btn-container {
+                            position: fixed; top: 20px; right: 20px; z-index: 1000;
+                        }
+                        .print-btn {
+                            background-color: #333; color: white; border: none; padding: 10px 20px;
+                            border-radius: 5px; cursor: pointer; font-size: 16px;
+                            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                            display: flex; align-items: center; gap: 8px;
+                            transition: background-color 0.2s;
+                            font-family: sans-serif;
+                        }
+                        .print-btn:hover { background-color: #555; }
+
+                        @media print {
+                            .no-print { display: none !important; }
+                            body { padding: 0; }
+                            .penmanship-grid-container { border-color: #000; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="print-btn-container no-print">
+                        <button class="print-btn" onclick="window.print()">
+                            <span>🖨️</span> 인쇄하기
+                        </button>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 15px;">
+                        <h1>${title}</h1>
+                        <span style="font-size: 0.9rem; color: #555;">생성: ${new Date().toLocaleString('ko-KR')}</span>
+                    </div>
+                    <div style="text-align: right; margin-bottom: 20px;">
+                        <span>학년: _____ 반: _____ 이름: __________</span>
+                    </div>
+                    ${content}
+
+                    <script>
+                        // Extra Script for dynamic content (e.g. HanziWriter)
+                        try {
+                            ${extraScript}
+                        } catch(e) { console.error(e); }
+                    <\/script>
+                </body>
+                </html>
+            `;
+            const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            window.open(url, '_blank');
+        }
+    </script>
+
+    <!-- Worksheet Generation Modal -->
+    <div class="modal-overlay" id="worksheetModal">
+        <div class="modal" style="position: relative; max-width: 900px;">
+            <button class="modal-close" onclick="closeWorksheetModal()">×</button>
+            <div class="modal-header">
+                <h2 class="modal-title">학습지 생성</h2>
+                <p style="color: #666;">학년을 선택하고 원하는 단어를 체크한 뒤 메뉴를 클릭하세요.</p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 350px 1fr; gap: 2rem;">
+                <!-- Left: Options & List -->
+                <div style="border-right: 1px solid #eee; padding-right: 1rem;">
+                    <div style="margin-bottom: 1rem;">
+                        <label class="form-label">대상 학년</label>
+                        <select id="worksheetGrade" class="form-input" onchange="updateWorksheetVocabList()">
+                            <option value="">전체 학년</option>
+                            <option value="1">1학년</option>
+                            <option value="2">2학년</option>
+                            <option value="3">3학년</option>
+                            <option value="4">4학년</option>
+                            <option value="5">5학년</option>
+                            <option value="6">6학년</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                            <input type="text" id="worksheetSearch" class="form-input" placeholder="단어 검색..."
+                                onkeyup="updateWorksheetVocabList()">
+                            <button class="btn btn-sm btn-outline" onclick="toggleSelectAll()">전체</button>
+                        </div>
+                        <div class="vocab-selection-list" id="worksheetVocabList">
+                            <!-- Populated by JS -->
+                        </div>
+                        <div style="text-align: right; font-size: 0.9rem; color: var(--primary-500); margin-top: 0.5rem;"
+                            id="selectedCount">
+                            랜덤 생성
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Action Buttons -->
+                <div class="grid grid-1" style="gap: 1rem; align-content: start;">
+                    <button onclick="generateWorksheet('meaning')" class="card text-center btn-outline"
+                        style="padding: 1.5rem; border: 2px solid var(--primary-200); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 1rem;">
+                        <div style="font-size: 2rem;">✍️</div>
+                        <div style="text-align: left;">
+                            <h3>단어 뜻 따라쓰기</h3>
+                            <p style="font-size: 0.9rem; color: #666;">선택한 단어의 뜻을 15칸 펜글씨 형식으로 연습합니다.</p>
+                        </div>
+                    </button>
+
+                    <button onclick="generateWorksheet('sentence')" class="card text-center btn-outline"
+                        style="padding: 1.5rem; border: 2px solid var(--secondary-200); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 1rem;">
+                        <div style="font-size: 2rem;">📝</div>
+                        <div style="text-align: left;">
+                            <h3>용례 따라쓰기</h3>
+                            <p style="font-size: 0.9rem; color: #666;">선택한 단어의 10개 예문을 따라 씁니다.</p>
+                        </div>
+                    </button>
+
+                    <button onclick="generateWorksheet('hanja')" class="card text-center btn-outline"
+                        style="padding: 1.5rem; border: 2px solid var(--accent-200); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 1rem;">
+                        <div style="font-size: 2rem;">🈳</div>
+                        <div style="text-align: left;">
+                            <h3>한자 따라쓰기</h3>
+                            <p style="font-size: 0.9rem; color: #666;">한자 쓰기 연습장을 만듭니다.</p>
+                        </div>
+                    </button>
+
+                    <button onclick="generateWorksheet('quiz')" class="card text-center btn-outline"
+                        style="padding: 1.5rem; border: 2px solid #ff9f43; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 1rem;">
+                        <div style="font-size: 2rem;">❓</div>
+                        <div style="text-align: left;">
+                            <h3>쪽지 시험 생성</h3>
+                            <p style="font-size: 0.9rem; color: #666;">빈칸 채우기 테스트지를 만듭니다.</p>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <style>
+            .vocab-selection-list {
+                height: 300px;
+                overflow-y: auto;
+                border: 1px solid #333;
+                border-radius: 8px;
+                padding: 0.5rem;
+                background: #000;
+                color: #fff;
+            }
+
+            .vocab-checkbox-item {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0.8rem;
+                border-bottom: 1px solid #222;
+                cursor: pointer;
+                transition: background 0.2s;
+            }
+
+            .vocab-checkbox-item:hover {
+                background: #111;
+            }
+
+            .vocab-text {
+                font-size: 1.1rem;
+                font-weight: 500;
+            }
+
+            .vocab-checkbox-item input[type="checkbox"] {
+                width: 16px;
+                height: 16px;
+            }
+        </style>
+    </div>
+    <!-- Quiz Generation Modal -->
+    <div class="modal-overlay" id="quizModal">
+        <div class="modal" style="position: relative; max-width: 900px;">
+            <button class="modal-close" onclick="closeQuizModal()">×</button>
+            <div class="modal-header">
+                <h2 class="modal-title">퀴즈 생성 및 배포</h2>
+                <p style="color: #666;">학생들에게 배포할 퀴즈를 생성합니다.</p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 350px 1fr; gap: 2rem;">
+                <!-- Word Selection -->
+                <div style="border-right: 1px solid #eee; padding-right: 1rem;">
+                    <div style="margin-bottom: 1rem;">
+                        <label class="form-label">대상 학년</label>
+                        <select id="quizGrade" class="form-input" onchange="updateQuizVocabList()">
+                            <option value="">전체 학년</option>
+                            <option value="1">1학년</option>
+                            <option value="2">2학년</option>
+                            <option value="3">3학년</option>
+                            <option value="4">4학년</option>
+                            <option value="5">5학년</option>
+                            <option value="6">6학년</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                            <input type="text" id="quizSearch" class="form-input" placeholder="단어 검색..."
+                                onkeyup="updateQuizVocabList()">
+                            <button class="btn btn-sm btn-outline" onclick="toggleQuizSelectAll()">전체</button>
+                        </div>
+                        <div class="vocab-selection-list" id="quizVocabList">
+                            <!-- Populated by JS -->
+                        </div>
+                        <div style="text-align: right; font-size: 0.9rem; color: var(--primary-500); margin-top: 0.5rem;"
+                            id="quizSelectedCount">
+                            0개 선택됨
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quiz Options -->
+                <div>
+                    <div class="form-group">
+                        <label class="form-label">퀴즈 제목</label>
+                        <input type="text" id="quizTitle" class="form-input" placeholder="예: 1단원 단어 쪽지시험">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">퀴즈 유형</label>
+                        <select id="quizType" class="form-input">
+                            <option value="meaning_match">단어 뜻 맞추기 (객관식)</option>
+                        </select>
+                    </div>
+
+                    <button onclick="createQuiz()" class="btn btn-primary"
+                        style="width: 100%; padding: 1rem; margin-top: 1rem;">
+                        🚀 퀴즈 생성 및 배포하기
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showQuizModal() {
+            document.getElementById('quizModal').classList.add('active');
+            updateQuizVocabList();
+        }
+
+        function closeQuizModal() {
+            document.getElementById('quizModal').classList.remove('active');
+        }
+
+        function updateQuizVocabList() {
+            const listDiv = document.getElementById('quizVocabList');
+            const gradeFilter = document.getElementById('quizGrade').value;
+            const search = document.getElementById('quizSearch').value.toLowerCase();
+
+            let filtered = vocabDB.vocabulary.filter(v => {
+                if (gradeFilter && v.grade != gradeFilter) return false;
+                if (search && !v.word.includes(search) && !v.meaning.toLowerCase().includes(search)) return false;
+                return true;
+            });
+
+            // If empty search/grade, limit to 100 for perf? Or show all (1000 items might lag rendering).
+            // Worksheet logic renders all? No, it handles it. 
+            // 1000 checkboxes is heavy but manageable.
+
+            let html = '';
+            filtered.forEach(v => {
+                html += `
+                    <label class="vocab-checkbox-item">
+                        <input type="checkbox" name="quizVocab" value="${v.id}" onchange="updateQuizSelectedCount()">
+                        <span class="vocab-text">${v.word}</span>
+                    </label>
+                `;
+            });
+
+            if (filtered.length === 0) {
+                html = '<div style="padding:1rem; text-align:center; color:#888;">검색 결과가 없습니다.</div>';
+            }
+
+            listDiv.innerHTML = html;
+            updateQuizSelectedCount();
+        }
+
+        function updateQuizSelectedCount() {
+            const count = document.querySelectorAll('input[name="quizVocab"]:checked').length;
+            document.getElementById('quizSelectedCount').textContent = count + '개 선택됨';
+        }
+
+        function toggleQuizSelectAll() {
+            const checkboxes = document.querySelectorAll('input[name="quizVocab"]');
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            checkboxes.forEach(cb => cb.checked = !allChecked);
+            updateQuizSelectedCount();
+        }
+
+        function createQuiz() {
+            const checkboxes = document.querySelectorAll('input[name="quizVocab"]:checked');
+            if (checkboxes.length === 0) {
+                alert('퀴즈에 포함할 단어를 최소 1개 이상 선택해주세요.');
+                return;
+            }
+            if (checkboxes.length < 4) {
+                alert('객관식 문항 생성을 위해 최소 4개 이상의 단어 데이터가 필요합니다. (오답 보기 생성용)');
+                // Actually we can pull distractors from global DB even if not selected for quiz.
+                // But selected words are the TARGETS.
+            }
+
+            const title = document.getElementById('quizTitle').value.trim();
+            if (!title) {
+                alert('퀴즈 제목을 입력해주세요.');
+                return;
+            }
+
+            const selectedIds = Array.from(checkboxes).map(cb => cb.value);
+            const targets = vocabDB.vocabulary.filter(v => selectedIds.includes(v.id));
+
+            // Generate Questions
+            const questions = targets.map(v => {
+                // Pick 3 distractors from ALL vocabulary (excluding correct one)
+                // To ensure quality distractors, maybe same grade?
+                let pool = vocabDB.vocabulary.filter(d => d.id !== v.id);
+                if (v.grade) {
+                    const gradePool = pool.filter(d => d.grade == v.grade);
+                    if (gradePool.length >= 3) pool = gradePool;
+                }
+
+                const distractors = pool.sort(() => 0.5 - Math.random()).slice(0, 3).map(d => d.meaning);
+                const options = [...distractors, v.meaning].sort(() => 0.5 - Math.random());
+
+                return {
+                    id: 'q_' + Date.now() + Math.random().toString(36).substr(2, 9),
+                    type: 'meaning_match',
+                    questionText: `'${v.word}'의 뜻은 무엇인가요?`,
+                    correctAnswer: v.meaning,
+                    options: options,
+                    wordId: v.id
+                };
+            });
+
+            const quiz = {
+                id: 'quiz_' + Date.now(),
+                title: title,
+                questions: questions,
+                createdAt: new Date().toISOString(),
+                targetGrade: document.getElementById('quizGrade').value || 'Mixed',
+                active: true,
+                stats: { attempts: 0, avgScore: 0 }
+            };
+
+            // Save to LocalStorage
+            const quizzes = JSON.parse(localStorage.getItem('quizzes') || '[]');
+            quizzes.push(quiz);
+            localStorage.setItem('quizzes', JSON.stringify(quizzes));
+
+            alert(`✅ 퀴즈 '${title}'가 성공적으로 생성 및 배포되었습니다!\n(학생들이 '오늘의 학습' 또는 '퀴즈' 메뉴에서 확인할 수 있습니다.)`);
+            closeQuizModal();
+        }
+    </script>
+
+    <!-- Saved Worksheets Modal -->
+    <div class="modal-overlay" id="savedWorksheetsModal">
+        <div class="modal" style="position: relative; max-width: 800px;">
+            <button class="modal-close" onclick="closeSavedWorksheetsModal()">×</button>
+            <div class="modal-header">
+                <h2 class="modal-title">📂 저장된 학습지 목록</h2>
+            </div>
+            <div id="savedWorksheetsList" style="max-height: 500px; overflow-y: auto;">
+                <!-- List Items -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showSavedWorksheetsModal() {
+            document.getElementById('savedWorksheetsModal').classList.add('active');
+            renderSavedWorksheets();
+        }
+
+        function closeSavedWorksheetsModal() {
+            document.getElementById('savedWorksheetsModal').classList.remove('active');
+        }
+
+        function renderSavedWorksheets() {
+            const listDiv = document.getElementById('savedWorksheetsList');
+            const saved = JSON.parse(localStorage.getItem('savedWorksheets') || '[]');
+
+            if (saved.length === 0) {
+                listDiv.innerHTML = '<div style="padding: 2rem; text-align: center; color: #666;">저장된 학습지가 없습니다.</div>';
+                return;
+            }
+
+            let html = '<div class="sentences-list">';
+            saved.forEach((item, index) => {
+                let typeLabel = '기타';
+                if (item.type === 'meaning') typeLabel = '단어 뜻';
+                else if (item.type === 'sentence') typeLabel = '용례';
+                else if (item.type === 'hanja') typeLabel = '한자';
+                else if (item.type === 'quiz') typeLabel = '쪽지시험';
+                html += `
+                    <div class="card" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 10px;">
+                        <div>
+                            <div style="font-weight: bold; font-size: 1.1rem;">${item.title}</div>
+                            <div style="color: #666; font-size: 0.8rem;">
+                                ${item.dateStr} | 유형: ${typeLabel} | 단어 ${item.vocabIds.length}개
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn btn-primary btn-sm" onclick="distributeWorksheet(${index})">📢 배포</button>
+                            <button class="btn btn-outline btn-sm" onclick="restoreWorksheet(${index})">🖨️ 보기</button>
+                            <button class="btn btn-outline btn-sm" style="color: #e00; border-color: #e00;" onclick="deleteSavedWorksheet(${index})">삭제</button>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            listDiv.innerHTML = html;
+        }
+
+        function distributeWorksheet(index) {
+            const saved = JSON.parse(localStorage.getItem('savedWorksheets') || '[]');
+            const item = saved[index];
+            if (!item) return;
+
+            if (!confirm(`'${item.title}' 학습지를 전체 학생에게 배포하시겠습니까?`)) return;
+
+            const assignment = {
+                id: 'assign_' + Date.now(),
+                worksheetId: item.id,
+                originalData: item,
+                title: item.title,
+                createdAt: new Date().toISOString(),
+                dateStr: new Date().toLocaleString('ko-KR'),
+                target: 'all'
+            };
+
+            const assignments = JSON.parse(localStorage.getItem('assignments') || '[]');
+            assignments.unshift(assignment);
+            localStorage.setItem('assignments', JSON.stringify(assignments));
+
+            alert('✅ 학습지가 배포되었습니다.\n학생들이 로그인하여 해당 학습지를 작성하고 제출할 수 있습니다.');
+        }
+
+        function restoreWorksheet(index) {
+            const saved = JSON.parse(localStorage.getItem('savedWorksheets') || '[]');
+            const item = saved[index];
+            if (!item) return;
+            generateWorksheet(item.type, item);
+        }
+
+        function deleteSavedWorksheet(index) {
+            if (!confirm('정말 삭제하시겠습니까?')) return;
+            const saved = JSON.parse(localStorage.getItem('savedWorksheets') || '[]');
+            saved.splice(index, 1);
+            localStorage.setItem('savedWorksheets', JSON.stringify(saved));
+            renderSavedWorksheets();
+        }
+    </script>
+
+    <script src="../js/worksheet-renderer.js"></script>
+
+    <!-- Distributed Worksheets List Modal -->
+    <div class="modal-overlay" id="distributedModal">
+        <div class="modal" style="position: relative; max-width: 800px;">
+            <button class="modal-close"
+                onclick="document.getElementById('distributedModal').classList.remove('active')">×</button>
+            <div class="modal-header">
+                <h2 class="modal-title">📨 배포된 학습지 관리</h2>
+            </div>
+            <div id="distributedList" style="max-height: 500px; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <!-- Submission List Modal -->
+    <div class="modal-overlay" id="submissionListModal" style="z-index: 1050;">
+        <div class="modal" style="position: relative; max-width: 600px;">
+            <button class="modal-close"
+                onclick="document.getElementById('submissionListModal').classList.remove('active')">×</button>
+            <div class="modal-header">
+                <h2 class="modal-title">📝 제출 현황</h2>
+                <p id="submissionListTitle" style="color: #666;"></p>
+            </div>
+            <div id="submissionListHelper"></div>
+        </div>
+    </div>
+
+    <!-- Submission Detail Modal -->
+    <div class="modal-overlay" id="submissionDetailModal" style="z-index: 1100;">
+        <div class="modal" style="position: relative; max-width: 90%; width: 900px; height: 90vh; padding: 0;">
+            <button class="modal-close"
+                onclick="document.getElementById('submissionDetailModal').classList.remove('active')"
+                style="z-index: 10; background: #fff; border-radius: 50%; width: 30px; height: 30px;">×</button>
+            <div style="height: 100%; overflow: auto; padding: 20px; position: relative; background: #555;">
+                <div id="reviewContainer"
+                    style="background: #fff; width: 794px; min-height: 1123px; padding: 40px; margin: 0 auto; position: relative;">
+                    <div id="reviewContent"></div>
+                    <img id="reviewInk"
+                        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Triggered by "Distributed Worksheets" Card
+        function showDistributedWorksheets() {
+            document.getElementById('distributedModal').classList.add('active');
+            renderDistributedList();
+        }
+
+        function renderDistributedList() {
+            const listDiv = document.getElementById('distributedList');
+            const assignments = JSON.parse(localStorage.getItem('assignments') || '[]');
+            const submissions = JSON.parse(localStorage.getItem('submissions') || '[]');
+
+            if (assignments.length === 0) {
+                listDiv.innerHTML = '<p style="text-align: center; color: #888;">배포된 학습지가 없습니다.</p>';
+                return;
+            }
+
+            listDiv.innerHTML = assignments.map(a => {
+                const subCount = submissions.filter(s => s.assignmentId === a.id).length;
+                return `
+                    <div class="card" style="margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; padding: 10px;">
+                        <div>
+                            <h3 style="margin:0; font-size: 1.1rem;">${a.title}</h3>
+                            <p style="color: #666; margin:0; font-size: 0.8rem;">배포일: ${a.dateStr}</p>
+                        </div>
+                        <div style="text-align: right; display: flex; align-items: center; gap: 10px;">
+                            <div style="font-weight: bold; font-size: 0.9rem;">제출: ${subCount}명</div>
+                            <button class="btn btn-primary btn-sm" onclick="showSubmissions('${a.id}')">확인</button>
+                            <button class="btn btn-outline btn-sm" style="color: #e00; border-color: #e00;" onclick="deleteDistributedWorksheet('${a.id}')">삭제</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function deleteDistributedWorksheet(assignId) {
+            if (!confirm('정말 삭제하시겠습니까? (제출된 과제 데이터는 유지되지만 목록에서 사라집니다)')) return;
+
+            let assignments = JSON.parse(localStorage.getItem('assignments') || '[]');
+            assignments = assignments.filter(a => a.id !== assignId);
+            localStorage.setItem('assignments', JSON.stringify(assignments));
+
+            renderDistributedList();
+        }
+
+        function showSubmissions(assignId) {
+            const submissions = JSON.parse(localStorage.getItem('submissions') || '[]');
+            const assignments = JSON.parse(localStorage.getItem('assignments') || '[]');
+            const assignment = assignments.find(a => a.id === assignId);
+
+            const filtered = submissions.filter(s => s.assignmentId === assignId);
+
+            document.getElementById('submissionListTitle').textContent = assignment ? assignment.title : '';
+            const listHelper = document.getElementById('submissionListHelper');
+
+            document.getElementById('submissionListModal').classList.add('active');
+
+            if (filtered.length === 0) {
+                listHelper.innerHTML = '<p style="text-align: center; padding: 20px;">제출된 과제가 없습니다.</p>';
+                return;
+            }
+
+            listHelper.innerHTML = filtered.map(s => `
+                <div class="card" style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; padding: 15px;">
+                    <div>
+                        <strong>${s.studentName}</strong>
+                        <div style="font-size: 0.8rem; color: #666;">${new Date(s.submittedAt).toLocaleString()}</div>
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="openReviewSafe('${s.id}')">채점/보기</button>
+                </div>
+            `).join('');
+        }
+
+        function openReview(subId) {
+            const submissions = JSON.parse(localStorage.getItem('submissions') || '[]');
+            const submission = submissions.find(s => s.id === subId);
+            if (!submission) return;
+
+            const assignments = JSON.parse(localStorage.getItem('assignments') || '[]');
+            const assignment = assignments.find(a => a.id === submission.assignmentId);
+
+            // Render Content
+            const vocabIds = assignment.originalData.vocabIds;
+            const type = assignment.originalData.type;
+            const vocabList = vocabDB.vocabulary.filter(v => vocabIds.includes(v.id));
+
+            const rendered = WorksheetRenderer.generate(type, vocabList);
+            document.getElementById('reviewContent').innerHTML = rendered.content;
+
+            // Render Ink
+            document.getElementById('reviewInk').src = submission.inkData;
+
+            document.getElementById('submissionDetailModal').classList.add('active');
+        }
+        function openReviewSafe(subId) {
+            const submissions = JSON.parse(localStorage.getItem('submissions') || '[]');
+            const submission = submissions.find(s => s.id === subId);
+            if (!submission) return;
+
+            const reviewContent = document.getElementById('reviewContent');
+            const reviewInk = document.getElementById('reviewInk');
+
+            reviewContent.innerHTML = '';
+            reviewInk.style.display = 'none';
+
+            if (submission.isFullImage) {
+                reviewContent.innerHTML = `<img src="${submission.inkData}" style="width: 100%; box-shadow: 0 0 10px rgba(0,0,0,0.1);">`;
+            } else {
+                const assignments = JSON.parse(localStorage.getItem('assignments') || '[]');
+                const assignment = assignments.find(a => a.id === submission.assignmentId);
+                if (assignment) {
+                    const vocabIds = assignment.originalData.vocabIds;
+                    const type = assignment.originalData.type;
+                    const vocabList = vocabDB.vocabulary.filter(v => vocabIds.includes(v.id));
+                    const rendered = WorksheetRenderer.generate(type, vocabList);
+                    reviewContent.innerHTML = rendered.content;
+                    reviewInk.src = submission.inkData;
+                    reviewInk.style.display = 'block';
+                }
+            }
+            document.getElementById('submissionDetailModal').classList.add('active');
+        }
+        // --- Daily Plan Manager Logic ---
+        let currentPlanWords = [];
+
+        function showDailyPlanModal() {
+            document.getElementById('dailyPlanModal').classList.add('active');
+            // Default to today and grade 3
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('planDate').value = today;
+            document.getElementById('planGrade').value = '3';
+            loadPlanForEditor();
+        }
+
+        function closeDailyPlanModal() {
+            document.getElementById('dailyPlanModal').classList.remove('active');
+            currentPlanWords = [];
+        }
+
+        async function loadPlanForEditor() {
+            const dateStr = document.getElementById('planDate').value;
+            const grade = document.getElementById('planGrade').value;
+            const listEl = document.getElementById('planWordsList');
+
+            if (!dateStr || !grade) return;
+
+            listEl.innerHTML = '<div style="padding:1rem;">불러오는 중...</div>';
+
+            // Try fetch from DBService
+            let plan = await dbService.getDailyPlan(dateStr, grade);
+
+            if (plan && plan.words && plan.words.length > 0) {
+                // Fetch vocab objects
+                currentPlanWords = vocabDB.vocabulary.filter(v => plan.words.includes(v.id));
+                // Sort to match order? plan.words is array of IDs.
+                // Map IDs to objects to preserve order
+                currentPlanWords = plan.words.map(id => vocabDB.vocabulary.find(v => v.id === id)).filter(v => v);
+            } else {
+                // Generate random default if not exists (simulate what student sees)
+                // But wait, getDailyWords generates and saves. 
+                // We can generate here for preview, but not save until User clicks Save.
+                const generated = vocabDB.getDailyWords(2, parseInt(grade), dateStr);
+                // Note: getDailyWords might save to LS if not found.
+                currentPlanWords = generated;
+            }
+
+            renderPlanWords();
+        }
+
+        function renderPlanWords() {
+            const listEl = document.getElementById('planWordsList');
+            listEl.innerHTML = '';
+
+            if (currentPlanWords.length === 0) {
+                listEl.innerHTML = '<div style="color:#aaa;">단어가 없습니다.</div>';
+                return;
+            }
+
+            currentPlanWords.forEach((vocab, index) => {
+                const div = document.createElement('div');
+                div.className = 'glass-card';
+                div.style.padding = '1rem';
+                div.style.marginBottom = '0.5rem';
+                div.style.display = 'flex';
+                div.style.justifyContent = 'space-between';
+                div.style.alignItems = 'center';
+
+                div.innerHTML = `
+                    <div>
+                        <strong style="color: var(--primary-color); font-size: 1.2rem;">${vocab.word}</strong>
+                        <span style="color: #aaa; margin-left:10px;">${vocab.meaning}</span>
+                        <div style="font-size: 0.9rem; color: #888;">${vocab.hanja || ''}</div>
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-outline" onclick="changeWordInPlan(${index})">변경</button>
+                    </div>
+                `;
+                listEl.appendChild(div);
+            });
+        }
+
+        function changeWordInPlan(index) {
+            const newWord = prompt("검색할 단어를 입력하세요 (한글/한자/뜻):");
+            if (!newWord) return;
+
+            const results = vocabDB.search(newWord);
+            if (results.length === 0) {
+                alert("검색 결과가 없습니다.");
+                return;
+            }
+
+            // Simple selection logic for now: pick first or show list
+            // For MVP, if multiple, ask user to be specific or take first.
+            // Or render list in prompt? No.
+            // Let's just pick first and confirm.
+            const candidate = results[0];
+            if (confirm(`'${candidate.word}' (${candidate.meaning}) 로 변경하시겠습니까?`)) {
+                currentPlanWords[index] = candidate;
+                renderPlanWords();
+            }
+        }
+
+        async function openWordSearchForPlan() {
+            // For adding a new word (if we want more than 2?) or just changing both?
+            // Prompt user: "How many words?" or just Add one.
+            // Let's keep it fixed to 2 as per system requirement, OR allow adding?
+            // Request was "modify". So existing 2 -> different 2.
+            // But button says "+ 단어 변경/검색".
+            // Let's assume user wants to ADD or Replace.
+            alert("단어 변경 버튼을 사용하여 개별 단어를 수정하세요.");
+        }
+
+        async function savePlanFromEditor() {
+            const dateStr = document.getElementById('planDate').value;
+            const grade = document.getElementById('planGrade').value;
+
+            if (!currentPlanWords || currentPlanWords.length === 0) {
+                alert("저장할 단어가 없습니다.");
+                return;
+            }
+
+            const wordIds = currentPlanWords.map(v => v.id);
+            await dbService.saveDailyPlan(dateStr, grade, wordIds);
+            alert("저장되었습니다.");
+            closeDailyPlanModal();
+        }
+    </script>
+    <!-- Student Management Modal -->
+    <div class="modal-overlay" id="studentManagementModal">
+        <div class="modal" style="position: relative; max-width: 800px;">
+            <button class="modal-close"
+                onclick="document.getElementById('studentManagementModal').classList.remove('active')">×</button>
+            <!-- CSV Bulk Upload Section -->
+            <div id="studentCsvSection"
+                style="margin-bottom: 1.5rem; background: #f8f9fa; padding: 1rem; border-radius: 8px; display: none;">
+                <h4>📂 학생 일괄 등록 (CSV)</h4>
+                <p style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">
+                    형식: <strong>이름, 아이디, 비밀번호, 학년</strong> (콤마로 구분, 줄바꿈으로 여러 명)
+                    <br>예시: <code>김철수, kcs01, 1234, 3</code>
+                </p>
+                <textarea id="studentCsvInput" class="form-input" style="height: 100px; font-family: monospace;"
+                    placeholder="여기에 CSV 데이터를 붙여넣으세요..."></textarea>
+                <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                    <button onclick="processStudentCsv()" class="btn btn-success" style="flex: 1;">일괄 등록하기</button>
+                    <button onclick="toggleStudentCsv()" class="btn btn-outline">취소</button>
+                </div>
+            </div>
+
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 class="modal-title">👥 학생 관리</h2>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button onclick="toggleStudentCsv()" class="btn btn-outline"
+                        style="border-color: #2ecc71; color: #2ecc71;">
+                        📂 CSV 일괄 추가
+                    </button>
+                    <button onclick="showAddStudentModal()" class="btn btn-primary">
+                        + 학생 추가
+                    </button>
+                </div>
+            </div>
+
+            <!-- Student List Container -->
+            <div id="studentsListModalContainer" style="max-height: 500px; overflow-y: auto;">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showStudentManagementModal() {
+            document.getElementById('studentManagementModal').classList.add('active');
+            renderStudentListInModal();
+        }
+
+        async function renderStudentListInModal() {
+            const listContainer = document.getElementById('studentsListModalContainer');
+            // Use auth.getStudents() to respect Teacher filtering
+            const students = await auth.getStudents();
+
+            if (students.length === 0) {
+                listContainer.innerHTML = '<div style="padding: 2rem; text-align: center; color: #666;">등록된 학생이 없습니다.</div>';
+                return;
+            }
+
+            let html = '<div class="grid grid-2" style="gap: 1rem;">';
+            students.forEach(s => {
+                html += `
+                     <div class="card" style="padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                         <div>
+                             <div style="font-weight: bold; font-size: 1.1rem;">${s.name}</div>
+                             <div style="color: #666; font-size: 0.9rem;">ID: ${s.username}</div>
+                             <div style="color: #999; font-size: 0.8rem;">PW: ${s.password}</div> 
+                         </div>
+                         <div style="display: flex; gap: 5px;">
+                            <button class="btn btn-outline btn-sm" onclick="showEditStudentModal('${s.username}')">수정</button>
+                            <button class="btn btn-outline btn-sm" style="color: #e00; border-color: #e00;" onclick="deleteStudent('${s.username}')">삭제</button>
+                         </div>
+                     </div>
+                 `;
+            });
+            html += '</div>';
+            listContainer.innerHTML = html;
+        }
+
+        // CSV Functions
+        function toggleStudentCsv() {
+            const section = document.getElementById('studentCsvSection');
+            section.style.display = section.style.display === 'none' ? 'block' : 'none';
+        }
+
+        async function processStudentCsv() {
+            const input = document.getElementById('studentCsvInput').value.trim();
+            if (!input) return;
+
+            const lines = input.split('\n');
+            let successCount = 0;
+            let failCount = 0;
+
+            if (!confirm(`${lines.length}명의 학생을 등록하시겠습니까?`)) return;
+
+            for (const line of lines) {
+                if (!line.trim()) continue;
+                // Format: Name, ID, PW, Grade
+                const parts = line.split(',').map(p => p.trim());
+                if (parts.length < 4) {
+                    console.warn('Invalid format:', line);
+                    failCount++;
+                    continue;
+                }
+
+                const [name, username, password, grade] = parts;
+
+                try {
+                    // Check if exists? auth.createStudent handles creation.
+                    // But duplicates might error or overwrite depending on impl. 
+                    // createStudent creates unique ID but saves username. 
+                    // dbService.saveUser merges if ID exists.
+                    // But here we are creating NEW students.
+                    // We need to check if username exists? 
+                    // auth.createStudent doesn't check username uniqueness explicitly yet, but let's assume valid.
+
+                    const result = await auth.createStudent({
+                        name,
+                        username,
+                        password,
+                        grade
+                    });
+
+                    if (result) successCount++;
+                    else failCount++;
+                } catch (e) {
+                    console.error(e);
+                    failCount++;
+                }
+            }
+
+            alert(`등록 완료: 성공 ${successCount}명, 실패 ${failCount}명`);
+            document.getElementById('studentCsvInput').value = '';
+            toggleStudentCsv(); // Close panel
+            renderStudentListInModal(); // Refresh list
+            loadDashboard(); // Update stats
+        }
+
+        var originalDeleteStudent = window.deleteStudent;
+        window.deleteStudent = async function (username) {
+            if (!confirm('정말 삭제하시겠습니까?')) return;
+
+            // Use auth system to delete
+            await auth.deleteStudent(username);
+
+            alert('삭제되었습니다.');
+            renderStudentListInModal();
+            loadDashboard(); // Update stats
+        };
+    </script>
+    <!-- CSV Generator Modal -->
+    <div class="modal-overlay" id="csvGenModal">
+        <div class="modal" style="position: relative; max-width: 900px;">
+            <button class="modal-close" onclick="closeCsvGeneratorModal()">×</button>
+            <div class="modal-header">
+                <h2 class="modal-title">📝 CSV 데이터 생성기</h2>
+                <p style="color: #666;">단어 정보를 입력하면 대량 추가용 CSV 코드를 만들어줍니다.</p>
+            </div>
+
+            <div class="grid grid-2" style="gap: 2rem; align-items: start;">
+                <!-- Input Form -->
+                <div>
+                    <h4 class="mb-3">입력 양식</h4>
+                    <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px;">
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                            <input type="text" id="genWord" class="form-input" placeholder="단어 (예: 학교)" style="flex:1;"
+                                onkeydown="if(event.key === 'Enter') autoFillVocabInfo()">
+                            <button onclick="autoFillVocabInfo()" class="btn btn-outline" style="white-space: nowrap;">
+                                🔍 검색/채우기
+                            </button>
+                        </div>
+                        <input type="text" id="genHanja" class="form-input mb-2" placeholder="한자 (예: 學校)">
+                        <input type="text" id="genMeaning" class="form-input mb-2" placeholder="뜻 (예: 배우는 곳)">
+                        <div class="grid grid-2" style="gap: 0.5rem; margin-bottom: 0.5rem;">
+                            <select id="genGrade" class="form-input">
+                                <option value="1">1학년</option>
+                                <option value="2">2학년</option>
+                                <option value="3">3학년</option>
+                                <option value="4">4학년</option>
+                                <option value="5">5학년</option>
+                                <option value="6">6학년</option>
+                            </select>
+                            <input type="text" id="genCategory" class="form-input" placeholder="카테고리 (예: 생활)">
+                        </div>
+                        <textarea id="genExamples" class="form-input mb-2" style="height: 60px;"
+                            placeholder="예문 (줄바꿈으로 여러 개)"></textarea>
+
+                        <button onclick="addCsvGenItem()" class="btn btn-primary" style="width: 100%;">
+                            ⬇️ 리스트에 추가
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Output Area -->
+                <div>
+                    <h4 class="mb-3">생성된 CSV 데이터</h4>
+                    <textarea id="csvGenOutput" class="form-input"
+                        style="height: 200px; font-family: monospace; background: #333; color: #fff;"
+                        readonly></textarea>
+
+                    <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                        <button onclick="copyCsvGenOutput()" class="btn btn-success" style="flex: 1;">
+                            📋 복사하기
+                        </button>
+                        <button onclick="resetCsvGen()" class="btn btn-outline"
+                            style="color: #e00; border-color: #e00;">
+                            초기화
+                        </button>
+                    </div>
+
+                    <div class="mt-3">
+                        <h4 style="font-size: 0.9rem;">추가된 목록 (<span id="genCount">0</span>개)</h4>
+                        <div id="genPreviewList"
+                            style="max-height: 150px; overflow-y: auto; font-size: 0.8rem; border: 1px solid #eee; padding: 0.5rem;">
+                            <!-- Items -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let generatedItems = [];
+
+        function showCsvGeneratorModal() {
+            document.getElementById('csvGenModal').classList.add('active');
+        }
+
+        function closeCsvGeneratorModal() {
+            document.getElementById('csvGenModal').classList.remove('active');
+        }
+
+        function addCsvGenItem() {
+            const word = document.getElementById('genWord').value.trim();
+            const hanja = document.getElementById('genHanja').value.trim();
+            const meaning = document.getElementById('genMeaning').value.trim();
+            const grade = document.getElementById('genGrade').value;
+            const category = document.getElementById('genCategory').value.trim() || '기타';
+            const examplesRaw = document.getElementById('genExamples').value.trim();
+
+            if (!word || !meaning) {
+                alert("단어와 뜻은 필수입니다.");
+                return;
+            }
+
+            const examplesStr = examplesRaw ? examplesRaw.split('\n').map(e => e.trim()).filter(e => e).join('|') : '';
+
+            // Format: Word, Hanja, Meaning, Grade, Category, Examples
+            const csvLine = `${word}, ${hanja}, ${meaning}, ${grade}, ${category}, ${examplesStr}`;
+
+            generatedItems.push({
+                display: `${word} (${meaning})`,
+                csv: csvLine
+            });
+
+            updateCsvGenUI();
+
+            // Clear inputs (except grade/category maybe?)
+            document.getElementById('genWord').value = '';
+            document.getElementById('genHanja').value = '';
+            document.getElementById('genMeaning').value = '';
+            document.getElementById('genExamples').value = '';
+            document.getElementById('genWord').focus();
+        }
+
+        function updateCsvGenUI() {
+            const output = document.getElementById('csvGenOutput');
+            const list = document.getElementById('genPreviewList');
+            const count = document.getElementById('genCount');
+
+            output.value = generatedItems.map(item => item.csv).join('\n');
+            count.textContent = generatedItems.length;
+
+            list.innerHTML = generatedItems.map((item, idx) => `
+                <div style="border-bottom: 1px solid #eee; padding: 2px;">
+                    ${idx + 1}. ${item.display}
+                </div>
+            `).join('');
+        }
+
+        function copyCsvGenOutput() {
+            const output = document.getElementById('csvGenOutput');
+            output.select();
+            document.execCommand('copy');
+            alert("클립보드에 복사되었습니다.\n'새 어휘 추가' 메뉴의 CSV 입력란에 붙여넣으세요!");
+        }
+
+        function resetCsvGen() {
+            if (confirm("작성된 내용을 모두 지우시겠습니까?")) {
+                generatedItems = [];
+                updateCsvGenUI();
+            }
+        }
+
+        // Global dictionary cache
+        let externalDict = null;
+        let isDictLoading = false;
+
+        async function loadExternalDictionary() {
+            if (externalDict || isDictLoading) return;
+            isDictLoading = true;
+
+            try {
+                showFeedback("📚 사전 데이터 로딩중...");
+                const response = await fetch('../js/kengdic.tsv');
+                if (!response.ok) throw new Error('Network response was not ok');
+                const text = await response.text();
+
+                externalDict = {};
+                const lines = text.split('\n');
+                // Skip header
+                for (let i = 1; i < lines.length; i++) {
+                    const parts = lines[i].split('\t');
+                    if (parts.length >= 4) {
+                        const word = parts[1].trim();
+                        const hanja = parts[2].trim();
+                        const gloss = parts[3].trim();
+
+                        if (!externalDict[word] || (!externalDict[word].hanja && hanja)) {
+                            externalDict[word] = { hanja, gloss };
+                        }
+                    }
+                }
+                console.log("Dictionary loaded, entries:", Object.keys(externalDict).length);
+                showFeedback("📚 사전 로딩 완료!");
+            } catch (err) {
+                console.error("Failed to load dictionary:", err);
+                showFeedback("❌ 사전 로딩 실패");
+            } finally {
+                isDictLoading = false;
+            }
+        }
+
+        function autoFillVocabInfo() {
+            const word = document.getElementById('genWord').value.trim();
+            if (!word) return;
+
+            // Trigger dictionary load if not ready (background)
+            if (!externalDict) loadExternalDictionary();
+
+            // 1. Search in Active vocabDB
+            let found = vocabDB.vocabulary.find(v => v.word === word);
+
+            // 1-2. If not in active DB, search in the Full Reference Dictionary (Code Base)
+            if (!found) {
+                const fullList = vocabDB.getSampleVocabulary();
+                console.log("Checking sample vocab:", fullList.length);
+                found = fullList.find(v => v.word === word);
+                if (found) {
+                    showFeedback("📚 사전에서 찾음");
+                }
+            } else {
+                showFeedback("✅ 내 단어장에서 찾음");
+            }
+
+            if (found) {
+                document.getElementById('genHanja').value = found.hanja || '';
+                document.getElementById('genMeaning').value = found.meaning || '';
+                document.getElementById('genGrade').value = found.grade || '1';
+                document.getElementById('genCategory').value = found.category || '';
+                if (found.examples && found.examples.length > 0) {
+                    document.getElementById('genExamples').value = found.examples.join('\n');
+                }
+                return;
+            }
+
+            // 2. Search in External Dictionary (Kengdic)
+            let extData = externalDict ? externalDict[word] : null;
+            let foundUnknownHanja = null;
+
+            if (extData) {
+                if (extData.hanja) {
+                    document.getElementById('genHanja').value = extData.hanja;
+                    foundUnknownHanja = extData.hanja;
+                }
+                if (extData.gloss) {
+                    document.getElementById('genMeaning').value = `(영) ${extData.gloss}`;
+                }
+                showFeedback("📖 외부 사전에서 찾음");
+            }
+
+            // 3. Search in hanjaCompounds (Reverse Lookup) if Hanja still missing
+            if (!foundUnknownHanja && typeof hanjaCompounds !== 'undefined') {
+                const searchStr = `${word} (`;
+                for (const key in hanjaCompounds) {
+                    const list = hanjaCompounds[key];
+                    const match = list.find(item => item.startsWith(searchStr));
+                    if (match) {
+                        const regex = /\((.+)\)/;
+                        const m = match.match(regex);
+                        if (m && m[1]) {
+                            foundUnknownHanja = m[1];
+                            document.getElementById('genHanja').value = foundUnknownHanja;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Generate Meaning from Hanja definitions if Hanja found but Meaning empty
+            if (foundUnknownHanja) {
+                if (!document.getElementById('genMeaning').value && typeof hanjaDic !== 'undefined' && foundUnknownHanja.length === word.length) {
+                    let meaningParts = [];
+                    for (let i = 0; i < word.length; i++) {
+                        const hChar = foundUnknownHanja[i];
+                        const wChar = word[i];
+                        const entries = hanjaDic[hChar];
+                        if (entries) {
+                            const entry = entries.find(e => e.kor === wChar) || entries[0];
+                            meaningParts.push(`${entry.def} ${wChar}`);
+                        }
+                    }
+                    if (meaningParts.length > 0) {
+                        const hanjaMeaning = `[한자풀이] ${meaningParts.join(', ')}`;
+                        // If existing value (e.g. from Kengdic), append. Else set.
+                        if (document.getElementById('genMeaning').value) {
+                            document.getElementById('genMeaning').value += ` / ${hanjaMeaning}`;
+                        } else {
+                            document.getElementById('genMeaning').value = hanjaMeaning;
+                        }
+                    }
+                }
+
+                showFeedback("⚠️ 한자/뜻 자동완성");
+                return;
+            }
+
+
+            // 4. Fallback: Suggest Hanja from hanjaDic (Char by Char)
+            if (!document.getElementById('genHanja').value && typeof hanjaDic !== 'undefined') {
+                let suggestedHanja = "";
+                let possible = true;
+                for (let char of word) {
+                    let candidates = [];
+                    for (let [h, defs] of Object.entries(hanjaDic)) {
+                        if (defs.some(d => d.kor === char)) candidates.push(h);
+                    }
+                    if (candidates.length > 0) suggestedHanja += candidates[0];
+                    else possible = false;
+                }
+                if (possible && suggestedHanja.length === word.length) {
+                    document.getElementById('genHanja').value = suggestedHanja + " (?)";
+                    showFeedback("⚠️ 한자 추정됨");
+                } else {
+                    alert(`'${word}'에 대한 정보를 DB 및 사전에서 찾을 수 없습니다.\n직접 입력해주세요.`);
+                    document.getElementById('genHanja').focus();
+                }
+                return;
+            }
+
+            if (document.getElementById('genHanja').value && !document.getElementById('genMeaning').value) {
+                document.getElementById('genMeaning').focus();
+                showFeedback("⚠️ 한자 찾음 (뜻 입력 필요)");
+            }
+
+            // Generate 10 Generic Examples if missing
+            if (!document.getElementById('genExamples').value) {
+                const josa = getKoreanParticles(word);
+                const examples = [
+                    `나는 ${word}${josa.ul} 좋아합니다.`,
+                    `${word}${josa.nun} 정말 중요합니다.`,
+                    `우리는 학교에서 ${word}에 대해 배웠습니다.`,
+                    `${word}의 뜻은 무엇일까요?`,
+                    `${word}${josa.ul} 사용하여 문장을 만들어 보세요.`,
+                    `${word}${josa.nun} 우리 생활과 관련이 있습니다.`,
+                    `친구와 함께 ${word}에 대해 이야기했습니다.`,
+                    `${word}${josa.ul} 잊지 않도록 노력해야 합니다.`,
+                    `책에서 ${word}라는 말을 보았습니다.`,
+                    `${word}${josa.nun} 한자로 어떻게 쓸까요?`
+                ];
+                document.getElementById('genExamples').value = examples.join('\n');
+            }
+        }
+
+        function getKoreanParticles(word) {
+            const lastChar = word.charCodeAt(word.length - 1);
+            const hasJongseong = (lastChar - 0xAC00) % 28 > 0;
+            return {
+                ul: hasJongseong ? '을' : '를',
+                nun: hasJongseong ? '은' : '는',
+                i: hasJongseong ? '이' : '가',
+                wa: hasJongseong ? '과' : '와'
+            };
+        }
+
+
+        function showFeedback(msg) {
+            const btn = document.querySelector('button[onclick="autoFillVocabInfo()"]');
+            const originalText = btn.innerText;
+            btn.innerText = msg;
+            setTimeout(() => btn.innerText = originalText, 1500);
+        }
+    </script>
+    <script>
+        // --- Settings Management Logic ---
+
+        function showSettingsModal() {
+            document.getElementById('settingsModal').classList.add('active');
+            loadSettingsToForm();
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settingsModal').classList.remove('active');
+        }
+
+        function loadSettingsToForm() {
+            const user = auth.getCurrentUser();
+            const settings = user.settings || {};
+
+            document.getElementById('settingSchoolName').value = settings.schoolName || '';
+            document.getElementById('settingClassName').value = settings.className || '';
+            document.getElementById('settingDefaultGrade').value = settings.defaultGrade || '';
+        }
+
+        document.getElementById('settingsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const updates = {
+                settings: {
+                    schoolName: document.getElementById('settingSchoolName').value.trim(),
+                    className: document.getElementById('settingClassName').value.trim(),
+                    defaultGrade: document.getElementById('settingDefaultGrade').value
+                }
+            };
+
+            try {
+                // auth.updateUser is the method we added to auth.js
+                await auth.updateUser(updates);
+                alert('설정이 저장되었습니다.');
+                closeSettingsModal();
+                applySettings(); // Refresh view
+            } catch (e) {
+                console.error(e);
+                alert('설정 저장 중 오류가 발생했습니다.');
+            }
+        });
+
+        // Apply settings to Dashboard UI
+        function applySettings() {
+            const user = auth.getCurrentUser();
+            if (!user || !user.settings) return;
+
+            // 1. Update Welcome Info
+            const welcomeMsg = document.getElementById('welcomeMessage');
+            let infoText = "";
+            if (user.settings.schoolName) infoText += user.settings.schoolName + " ";
+            if (user.settings.className) infoText += user.settings.className + " ";
+
+            // If we have custom school/class info, append it or replace
+            // Current text: "Welcome, Name!"
+            // We can change it to: "Welcome, Name! (School Class)"
+            if (infoText) {
+                // Check if already applied to avoid duplication if called multiple times?
+                // Just reset simple template.
+                welcomeMsg.textContent = `환영합니다, ${user.name} 선생님! (${infoText.trim()}) 👋`;
+            }
+
+            // 2. Pre-select Defaults in Dropdowns (if they exist on page)
+            const defGrade = user.settings.defaultGrade;
+            if (defGrade) {
+                const addStudentGrade = document.getElementById('studentGrade');
+                if (addStudentGrade && !addStudentGrade.value) addStudentGrade.value = defGrade;
+
+                const worksheetGrade = document.getElementById('worksheetGrade');
+                // Only if "All Grades" (empty) is selected, or force?
+                // Usually force default on load.
+                if (worksheetGrade && worksheetGrade.value === "") {
+                    worksheetGrade.value = defGrade;
+                    // Trigger change event if needed
+                    if (typeof updateWorksheetVocabList === 'function') updateWorksheetVocabList();
+                }
+
+                const quizGrade = document.getElementById('quizGrade');
+                if (quizGrade && quizGrade.value === "") {
+                    quizGrade.value = defGrade;
+                    if (typeof updateQuizVocabList === 'function') updateQuizVocabList();
+                }
+
+                const dailyPlanGrade = document.getElementById('planGrade');
+                // DailyPlan defaults to 3 in showDailyPlanModal, let's override logic there or here?
+                // showDailyPlanModal calls `planGrade.value = '3'`. I should modify `showDailyPlanModal` to check settings.
+            }
+        }
+
+        // Hook into initialization
+        // We need to call applySettings() after loadDashboard or on page load.
+        // Since this script runs at end of body, auth.init might be async.
+        // We can hook into window load or just call it if auth is ready.
+        // Auth is sync-ish for getCurrentUser if loaded from localStorage.
+
+        // Let's add a safe check
+        if (auth.isLoggedIn()) {
+            applySettings();
+        }
+
+        // Modify existing functions to use settings?
+        // showDailyPlanModal specific override:
+        const originalShowDailyPlan = window.showDailyPlanModal;
+        window.showDailyPlanModal = function () {
+            document.getElementById('dailyPlanModal').classList.add('active');
+
+            const user = auth.getCurrentUser();
+            const defGrade = (user.settings && user.settings.defaultGrade) ? user.settings.defaultGrade : '3';
+
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('planDate').value = today;
+            document.getElementById('planGrade').value = defGrade;
+
+            loadPlanForEditor();
+        };
+
+    </script>
+</body>
+
+</html>

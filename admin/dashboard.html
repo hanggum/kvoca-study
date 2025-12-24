@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 대시보드 - 어휘나라</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .admin-header {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container navbar-content">
+            <a href="../index.html" class="navbar-brand">✨ 어휘나라 (관리자)</a>
+            <ul class="navbar-menu">
+                <li><span id="userName" class="navbar-link">관리자님</span></li>
+                <li><button onclick="auth.logout()" class="btn btn-outline btn-sm">로그아웃</button></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <section class="container mt-4 mb-5">
+        <!-- Welcome Section -->
+        <div class="glass-card mb-4"
+            style="padding: 1rem 1.5rem; display: flex; align-items: center; gap: 1rem; border-left: 5px solid #6c5ce7;">
+            <h2 id="welcomeMessage" style="margin: 0; font-size: 1.5rem;">시스템 관리자 모드</h2>
+            <div style="width: 1px; height: 20px; background: #ccc;"></div>
+            <p class="card-text" style="margin: 0; font-size: 1rem;">선생님 계정을 관리하고 전체 시스템을 모니터링합니다. 🛠️</p>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="grid grid-3 mb-4">
+            <div class="card stats-card" style="padding: 1rem;">
+                <div class="stats-number" id="totalTeachers" style="font-size: 2rem; margin-bottom: 0;">0</div>
+                <div class="stats-label" style="font-size: 0.9rem;">등록된 선생님</div>
+            </div>
+
+            <div class="card stats-card" style="padding: 1rem;">
+                <div class="stats-number" id="totalStudents" style="font-size: 2rem; margin-bottom: 0;">0</div>
+                <div class="stats-label" style="font-size: 0.9rem;">전체 학생</div>
+            </div>
+
+            <div class="card stats-card" style="padding: 1rem;">
+                <div class="stats-number" id="totalVocab" style="font-size: 2rem; margin-bottom: 0;">0</div>
+                <div class="stats-label" style="font-size: 0.9rem;">전체 어휘 DB</div>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h2>👨‍🏫 선생님 계정 관리</h2>
+            <button onclick="showAddTeacherModal()" class="btn btn-primary" style="background: #6c5ce7;">
+                + 선생님 추가
+            </button>
+        </div>
+
+        <!-- Teacher List -->
+        <div id="teachersList" class="grid grid-2 mb-5">
+            <!-- Populated by JS -->
+            <div class="card text-center text-muted">로딩 중...</div>
+        </div>
+
+    </section>
+
+    <!-- Add Teacher Modal -->
+    <div class="modal-overlay" id="addTeacherModal">
+        <div class="modal" style="position: relative;">
+            <button class="modal-close" onclick="closeAddTeacherModal()">×</button>
+            <div class="modal-header">
+                <h2 class="modal-title">선생님 추가</h2>
+            </div>
+            <form id="addTeacherForm">
+                <div class="form-group">
+                    <label class="form-label" for="teacherName">이름</label>
+                    <input type="text" id="teacherName" class="form-input" required placeholder="예: 김철수 선생님">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="teacherUsername">아이디</label>
+                    <input type="text" id="teacherUsername" class="form-input" required placeholder="로그인 아이디">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="teacherPassword">비밀번호</label>
+                    <input type="password" id="teacherPassword" class="form-input" required placeholder="초기 비밀번호">
+                </div>
+
+                <div style="display: flex; gap: 1rem;">
+                    <button type="button" onclick="closeAddTeacherModal()" class="btn btn-outline" style="flex: 1;">
+                        취소
+                    </button>
+                    <button type="submit" class="btn btn-primary" style="flex: 1; background: #6c5ce7;">
+                        추가하기
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <!-- Config & Data Service -->
+    <script src="../js/firebase-config.js"></script>
+    <script src="../js/data-service.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/vocab-data.js"></script>
+
+    <script>
+        // Check authentication
+        if (!auth.requireAuth('admin')) {
+            window.location.href = 'login.html';
+        }
+
+        const user = auth.getCurrentUser();
+        // document.getElementById('userName').textContent = user.name;
+
+        // Load dashboard data
+        async function loadDashboard() {
+            // Get all USERS
+            const users = await dbService.getUsers();
+
+            const teachers = users.filter(u => u.role === 'teacher');
+            const students = users.filter(u => u.role === 'student');
+
+            document.getElementById('totalTeachers').textContent = teachers.length;
+            document.getElementById('totalStudents').textContent = students.length;
+            document.getElementById('totalVocab').textContent = vocabDB.vocabulary.length;
+
+            renderTeacherList(teachers, students);
+        }
+
+        function renderTeacherList(teachers, allStudents) {
+            const listDiv = document.getElementById('teachersList');
+
+            if (teachers.length === 0) {
+                listDiv.innerHTML = '<div class="card text-center text-muted" style="grid-column: 1/-1;">등록된 선생님이 없습니다.</div>';
+                return;
+            }
+
+            let html = '';
+            teachers.forEach(teacher => {
+                // Count students for this teacher? 
+                // Currently students are not strictly linked to a teacher ID in the DB (schema is flat).
+                // They are just "Students". Maybe in future we link them.
+                // For now, simple list.
+
+                html += `
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <div>
+                                <h3 style="margin-bottom: 0.5rem;">${teacher.name}</h3>
+                                <p style="color: #888; margin-bottom: 0.2rem;">아이디: ${teacher.username}</p>
+                                <p style="color: #666; font-size: 0.8rem;">등록일: ${new Date(teacher.createdAt).toLocaleDateString()}</p>
+                            </div>
+                            <button onclick="deleteTeacher('${teacher.username}')" class="btn btn-sm btn-outline" style="border-color: #ff6b6b; color: #ff6b6b;">
+                                삭제
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            listDiv.innerHTML = html;
+        }
+
+        // Add Teacher Modal
+        function showAddTeacherModal() {
+            document.getElementById('addTeacherModal').classList.add('active');
+            document.getElementById('addTeacherForm').reset();
+        }
+
+        function closeAddTeacherModal() {
+            document.getElementById('addTeacherModal').classList.remove('active');
+        }
+
+        document.getElementById('addTeacherForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const name = document.getElementById('teacherName').value;
+            const username = document.getElementById('teacherUsername').value;
+            const password = document.getElementById('teacherPassword').value;
+
+            try {
+                // Check if user exists first? (Naive check in saveUser or here)
+                // auth.createTeacher calls dbService.saveUser
+                await auth.createTeacher({ name, username, password });
+                alert('선생님 계정이 생성되었습니다.');
+                closeAddTeacherModal();
+                loadDashboard();
+            } catch (e) {
+                console.error(e);
+                alert('오류가 발생했습니다.');
+            }
+        });
+
+        async function deleteTeacher(username) {
+            if (!confirm(`정말 '${username}' 선생님 계정을 삭제하시겠습니까?`)) return;
+
+            try {
+                const result = await auth.deleteTeacher(username);
+                if (result) {
+                    alert('삭제되었습니다.');
+                    loadDashboard();
+                } else {
+                    alert('삭제에 실패했습니다.');
+                }
+            } catch (e) {
+                console.error(e);
+                alert('오류가 발생했습니다.');
+            }
+        }
+
+        // Init
+        loadDashboard();
+    </script>
+</body>
+
+</html>

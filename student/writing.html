@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>문장 만들기 - 어휘나라</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .word-chip {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background: var(--primary-gradient);
+            color: white;
+            border-radius: var(--radius-full);
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0.5rem;
+            box-shadow: var(--shadow-md);
+            animation: popIn 0.3s ease-out;
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: scale(0);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .sentence-textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 1.5rem;
+            background: var(--bg-dark-tertiary);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-lg);
+            color: var(--text-primary);
+            font-family: var(--font-korean);
+            font-size: 1.25rem;
+            line-height: 1.8;
+            resize: vertical;
+            transition: all var(--transition-base);
+        }
+
+        .sentence-textarea:focus {
+            outline: none;
+            border-color: var(--primary-500);
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.3);
+        }
+
+        .sentence-textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        .example-box {
+            background: rgba(79, 172, 254, 0.1);
+            border-left: 4px solid var(--primary-500);
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius-md);
+            margin: 1rem 0;
+        }
+
+        .feedback-box {
+            padding: 1.5rem;
+            border-radius: var(--radius-lg);
+            margin-top: 1rem;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .feedback-box.good {
+            background: rgba(0, 242, 160, 0.1);
+            border: 2px solid rgba(0, 242, 160, 0.3);
+        }
+
+        .feedback-box.needs-improvement {
+            background: rgba(245, 87, 108, 0.1);
+            border: 2px solid rgba(245, 87, 108, 0.3);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .sentence-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all var(--transition-base);
+        }
+
+        .sentence-card:hover {
+            background: var(--bg-card-hover);
+            transform: translateX(4px);
+        }
+
+        .quality-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-full);
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .quality-excellent {
+            background: linear-gradient(135deg, #00f2a0 0%, #00d4ff 100%);
+            color: white;
+        }
+
+        .quality-good {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .quality-okay {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: white;
+        }
+
+        .character-count {
+            text-align: right;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        .star-rating {
+            font-size: 2rem;
+            color: #ffd700;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container navbar-content">
+            <a href="dashboard.html" class="navbar-brand">✨ 어휘나라</a>
+            <ul class="navbar-menu">
+                <li><a href="dashboard.html" class="navbar-link">← 대시보드로</a></li>
+                <li><span id="userName" class="navbar-link"></span></li>
+                <li><button onclick="auth.logout()" class="btn btn-outline btn-sm">로그아웃</button></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <section class="container mt-4 mb-5">
+        <!-- Header -->
+        <div class="glass-card mb-4">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <h1>✍️ 창의적 문장 만들기</h1>
+                    <p class="card-text">주어진 어휘를 사용하여 나만의 문장을 만들어보세요</p>
+                </div>
+                <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                    <span class="badge badge-primary" id="progressBadge">1 / 5</span>
+                    <span class="badge badge-success" id="scoreBadge">점수: 0</span>
+                </div>
+            </div>
+            <div class="progress-bar mt-3">
+                <div class="progress-fill" id="overallProgress" style="width: 20%"></div>
+            </div>
+        </div>
+
+        <!-- Writing Area -->
+        <div class="glass-card mb-4" id="writingArea">
+            <!-- Current Word -->
+            <div class="text-center mb-4">
+                <h2 style="color: var(--text-secondary); margin-bottom: 1rem;">이번 어휘</h2>
+                <div class="word-chip" id="currentWord">어휘</div>
+                <div class="mt-3">
+                    <p style="font-size: 1.125rem; color: var(--text-secondary);">
+                        <strong>뜻:</strong> <span id="currentMeaning"></span>
+                    </p>
+                    <p style="color: var(--text-muted);">
+                        한자: <span id="currentHanja"></span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Example Sentences -->
+            <div class="example-box">
+                <h4>📖 예문 참고하기</h4>
+                <div id="examplesList" style="margin-top: 1rem;">
+                    <!-- Examples will be added here -->
+                </div>
+            </div>
+
+            <!-- Writing Input -->
+            <div class="mt-4">
+                <h3>나만의 문장 만들기</h3>
+                <textarea id="sentenceInput" class="sentence-textarea"
+                    placeholder="위의 어휘를 포함하여 창의적인 문장을 만들어보세요...&#10;&#10;팁: 최소 10자 이상 작성해주세요!"
+                    maxlength="200"></textarea>
+                <div class="character-count">
+                    <span id="charCount">0</span> / 200자
+                </div>
+            </div>
+
+            <!-- Feedback Area -->
+            <div id="feedbackArea"></div>
+
+            <!-- Action Buttons -->
+            <div class="mt-4" style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <button id="submitBtn" class="btn btn-primary btn-lg" onclick="submitSentence()">
+                    제출하기
+                </button>
+                <button id="skipBtn" class="btn btn-outline" onclick="skipWord()">
+                    건너뛰기
+                </button>
+                <button id="nextBtn" class="btn btn-success btn-lg hidden" onclick="nextWord()">
+                    다음 어휘 →
+                </button>
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-3 mt-4">
+                <div class="card text-center">
+                    <div class="stats-number" id="completedCount">0</div>
+                    <div class="stats-label">완료</div>
+                </div>
+                <div class="card text-center">
+                    <div class="stats-number" id="skippedCount">0</div>
+                    <div class="stats-label">건너뛰기</div>
+                </div>
+                <div class="card text-center">
+                    <div class="stats-number" id="avgQuality">0</div>
+                    <div class="stats-label">평균 품질</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completed Sentences -->
+        <div class="glass-card mb-4" id="sentencesHistory" style="display: none;">
+            <h2 class="mb-3">📝 작성한 문장들</h2>
+            <div id="historyList"></div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsSection" class="glass-card mt-5 hidden">
+            <div class="text-center">
+                <div style="font-size: 5rem; margin-bottom: 1rem;">🎊</div>
+                <h2>문장 만들기 완료!</h2>
+                <div class="star-rating" id="starRating">
+                    ⭐⭐⭐⭐⭐
+                </div>
+                <div class="stats-number" id="finalScore" style="margin: 2rem 0;">0점</div>
+                <p class="card-text" id="resultMessage"></p>
+
+                <div class="grid grid-3 mt-4 mb-4" style="max-width: 800px; margin-left: auto; margin-right: auto;">
+                    <div class="card">
+                        <div class="stats-number" id="finalCompleted">0</div>
+                        <div class="stats-label">완료한 문장</div>
+                    </div>
+                    <div class="card">
+                        <div class="stats-number" id="finalQuality">0</div>
+                        <div class="stats-label">평균 품질</div>
+                    </div>
+                    <div class="card">
+                        <div class="stats-number" id="finalCreativity">0</div>
+                        <div class="stats-label">창의성 점수</div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                    <button onclick="restartWriting()" class="btn btn-secondary">
+                        🔄 다시 만들기
+                    </button>
+                    <a href="flashcards.html" class="btn btn-primary">
+                        처음부터 다시 학습
+                    </a>
+                    <a href="dashboard.html" class="btn btn-outline">
+                        대시보드로
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tips -->
+        <div class="card mt-4">
+            <h3>💡 좋은 문장 만들기 팁</h3>
+            <ul style="color: var(--text-secondary); line-height: 2;">
+                <li>어휘의 뜻을 정확하게 이해하고 사용하세요</li>
+                <li>자신의 경험이나 생각을 담아보세요</li>
+                <li>문장이 자연스럽고 의미가 분명해야 합니다</li>
+                <li>창의적이고 독특한 표현을 시도해보세요</li>
+                <li>최소 10자 이상 작성해주세요</li>
+            </ul>
+        </div>
+    </section>
+
+    <script src="../js/auth.js"></script>
+    <script src="../js/vocab-data.js"></script>
+    <script>
+        // Check authentication
+        if (!auth.requireAuth('student')) {
+            window.location.href = 'login.html';
+        }
+
+        const user = auth.getCurrentUser();
+        document.getElementById('userName').textContent = `${user.name} (${user.grade}학년)`;
+
+        // Writing state
+        let currentIndex = 0;
+        let vocabulary = [];
+        let completedCount = 0;
+        let skippedCount = 0;
+        let sentences = [];
+        let totalQualityScore = 0;
+
+        // Initialize
+        function initWriting() {
+            const studyDate = sessionStorage.getItem('studyDate');
+            vocabulary = vocabDB.getDailyWords(2, user.grade, studyDate); // 2 words for writing practice
+
+            if (vocabulary.length === 0) {
+                alert('학습할 어휘가 없습니다. 관리자에게 문의하세요.');
+                window.location.href = 'dashboard.html';
+                return;
+            }
+
+            showWord();
+        }
+
+        // Show current word
+        function showWord() {
+            if (currentIndex >= vocabulary.length) {
+                finishWriting();
+                return;
+            }
+
+            const vocab = vocabulary[currentIndex];
+
+            document.getElementById('currentWord').textContent = vocab.word;
+            document.getElementById('currentMeaning').textContent = vocab.meaning;
+            document.getElementById('currentHanja').textContent = vocab.hanja;
+
+            // Show 3 random examples
+            const examples = vocab.examples.sort(() => 0.5 - Math.random()).slice(0, 3);
+            const examplesHTML = examples.map((ex, i) =>
+                `<p style="color: var(--text-secondary); margin: 0.5rem 0;">
+                    ${i + 1}. ${ex}
+                </p>`
+            ).join('');
+            document.getElementById('examplesList').innerHTML = examplesHTML;
+
+            // Reset input
+            document.getElementById('sentenceInput').value = '';
+            document.getElementById('feedbackArea').innerHTML = '';
+            document.getElementById('charCount').textContent = '0';
+            document.getElementById('submitBtn').classList.remove('hidden');
+            document.getElementById('nextBtn').classList.add('hidden');
+
+            // Update progress
+            updateProgress();
+        }
+
+        // Update progress
+        function updateProgress() {
+            document.getElementById('progressBadge').textContent =
+                `${currentIndex + 1} / ${vocabulary.length}`;
+            document.getElementById('overallProgress').style.width =
+                ((currentIndex + 1) / vocabulary.length * 100) + '%';
+
+            document.getElementById('completedCount').textContent = completedCount;
+            document.getElementById('skippedCount').textContent = skippedCount;
+
+            const avgQuality = completedCount > 0 ?
+                Math.round(totalQualityScore / completedCount) : 0;
+            document.getElementById('avgQuality').textContent = avgQuality;
+
+            const score = completedCount > 0 ?
+                Math.round((totalQualityScore / completedCount) * (completedCount / vocabulary.length) * 10) : 0;
+            document.getElementById('scoreBadge').textContent = `점수: ${score}`;
+        }
+
+        // Character counter
+        document.getElementById('sentenceInput').addEventListener('input', (e) => {
+            const count = e.target.value.length;
+            document.getElementById('charCount').textContent = count;
+        });
+
+        // Submit sentence
+        function submitSentence() {
+            const sentence = document.getElementById('sentenceInput').value.trim();
+            const word = vocabulary[currentIndex].word;
+
+            // Validation
+            if (sentence.length < 10) {
+                showFeedback('문장이 너무 짧습니다. 최소 10자 이상 작성해주세요.', false);
+                return;
+            }
+
+            if (!sentence.includes(word)) {
+                showFeedback(`문장에 "${word}" 어휘가 포함되어야 합니다.`, false);
+                return;
+            }
+
+            // Analyze sentence quality
+            const quality = analyzeSentence(sentence, word);
+
+            // Save sentence
+            sentences.push({
+                word: word,
+                sentence: sentence,
+                quality: quality.score,
+                feedback: quality.feedback
+            });
+
+            completedCount++;
+            totalQualityScore += quality.score;
+
+            // Show feedback
+            showFeedback(quality.feedback, true, quality.score);
+
+            // Update history
+            updateHistory();
+
+            // Update progress
+            updateProgress();
+
+            // Show next button
+            document.getElementById('submitBtn').classList.add('hidden');
+            document.getElementById('nextBtn').classList.remove('hidden');
+        }
+
+        // Analyze sentence quality
+        function analyzeSentence(sentence, word) {
+            let score = 5; // Base score
+            let feedback = [];
+
+            // Length bonus
+            if (sentence.length >= 30) {
+                score += 2;
+                feedback.push('문장의 길이가 적절합니다');
+            } else if (sentence.length >= 20) {
+                score += 1;
+            }
+
+            // Punctuation bonus
+            if (sentence.includes('.') || sentence.includes('!') || sentence.includes('?')) {
+                score += 1;
+                feedback.push('문장 부호를 올바르게 사용했습니다');
+            }
+
+            // Multiple clauses bonus
+            if (sentence.includes(',') || sentence.includes('그리고') || sentence.includes('하지만')) {
+                score += 1;
+                feedback.push('문장 구조가 풍부합니다');
+            }
+
+            // Creativity bonus (check for descriptive words)
+            const descriptiveWords = ['매우', '정말', '아주', '너무', '특별히', '항상', '언제나'];
+            if (descriptiveWords.some(dw => sentence.includes(dw))) {
+                score += 1;
+                feedback.push('표현이 풍부합니다');
+            }
+
+            // Cap score at 10
+            score = Math.min(score, 10);
+
+            // Generate overall feedback
+            let overallFeedback = '';
+            if (score >= 9) {
+                overallFeedback = '🌟 훌륭한 문장입니다! 매우 창의적이고 자연스러워요!';
+            } else if (score >= 7) {
+                overallFeedback = '✨ 좋은 문장이에요! 어휘를 잘 사용했어요!';
+            } else if (score >= 5) {
+                overallFeedback = '👍 괜찮은 문장이에요. 조금 더 길게 써보면 어떨까요?';
+            } else {
+                overallFeedback = '💪 좋아요! 다음에는 더 자세히 써보세요!';
+            }
+
+            if (feedback.length > 0) {
+                overallFeedback += '<ul style="margin-top: 1rem; text-align: left;">';
+                feedback.forEach(f => {
+                    overallFeedback += `<li>${f}</li>`;
+                });
+                overallFeedback += '</ul>';
+            }
+
+            return {
+                score: score,
+                feedback: overallFeedback
+            };
+        }
+
+        // Show feedback
+        function showFeedback(message, isGood, score = null) {
+            const feedbackArea = document.getElementById('feedbackArea');
+            const className = isGood ? 'good' : 'needs-improvement';
+
+            let html = `<div class="feedback-box ${className}">`;
+
+            if (score !== null) {
+                const qualityClass = score >= 8 ? 'quality-excellent' :
+                    score >= 6 ? 'quality-good' : 'quality-okay';
+                html += `<div class="text-center mb-3">
+                    <span class="quality-indicator ${qualityClass}">
+                        품질 점수: ${score}/10
+                    </span>
+                </div>`;
+            }
+
+            html += `<div>${message}</div>`;
+            html += `</div>`;
+
+            feedbackArea.innerHTML = html;
+        }
+
+        // Update history
+        function updateHistory() {
+            const historyDiv = document.getElementById('sentencesHistory');
+            const historyList = document.getElementById('historyList');
+
+            historyDiv.style.display = 'block';
+
+            let html = '';
+            sentences.forEach((s, i) => {
+                const qualityClass = s.quality >= 8 ? 'quality-excellent' :
+                    s.quality >= 6 ? 'quality-good' : 'quality-okay';
+
+                html += `
+                    <div class="sentence-card">
+                        <div style="display: flex; justify-content: space-between; align-items: start; gap: 1rem; flex-wrap: wrap;">
+                            <div style="flex: 1;">
+                                <div class="word-chip" style="font-size: 1rem; padding: 0.5rem 1rem; margin: 0 0 1rem 0;">
+                                    ${s.word}
+                                </div>
+                                <p style="font-size: 1.125rem; color: var(--text-primary); margin-bottom: 1rem;">
+                                    "${s.sentence}"
+                                </p>
+                            </div>
+                            <div>
+                                <span class="quality-indicator ${qualityClass}">
+                                    ${s.quality}/10
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            historyList.innerHTML = html;
+        }
+
+        // Next word
+        function nextWord() {
+            currentIndex++;
+            showWord();
+        }
+
+        // Skip word
+        function skipWord() {
+            if (confirm('이 어휘를 건너뛰시겠습니까?')) {
+                skippedCount++;
+                currentIndex++;
+                updateProgress();
+                showWord();
+            }
+        }
+
+        // Finish writing
+        function finishWriting() {
+            const total = completedCount + skippedCount;
+            const avgQuality = completedCount > 0 ?
+                Math.round(totalQualityScore / completedCount) : 0;
+            const score = Math.round((completedCount / vocabulary.length) * avgQuality * 10);
+            const creativity = Math.round(avgQuality * 10);
+
+            // Update progress
+            const currentProgress = user.progress.writingCompleted || 0;
+            auth.updateProgress({
+                writingCompleted: currentProgress + vocabulary.length
+            });
+
+            // Save history
+            auth.saveStudyHistory({
+                type: 'writing',
+                vocabularyCount: vocabulary.length,
+                score: score,
+                completed: completedCount,
+                skipped: skippedCount,
+                avgQuality: avgQuality,
+                creativity: creativity
+            });
+
+            // Show results
+            document.getElementById('writingArea').classList.add('hidden');
+            document.getElementById('sentencesHistory').style.display = 'none';
+            document.getElementById('resultsSection').classList.remove('hidden');
+            document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+
+            document.getElementById('finalScore').textContent = score + '점';
+            document.getElementById('finalCompleted').textContent = completedCount;
+            document.getElementById('finalQuality').textContent = avgQuality;
+            document.getElementById('finalCreativity').textContent = creativity;
+
+            // Star rating
+            const stars = Math.round(score / 20);
+            document.getElementById('starRating').textContent = '⭐'.repeat(stars) + '☆'.repeat(5 - stars);
+
+            let message = '';
+            if (score >= 80) {
+                message = '정말 훌륭합니다! 🌟 당신은 진정한 작가의 재능이 있어요!';
+            } else if (score >= 60) {
+                message = '잘했어요! 👏 창의적인 문장들이 많았어요!';
+            } else if (score >= 40) {
+                message = '좋아요! 💪 계속 연습하면 더 좋아질 거예요!';
+            } else {
+                message = '괜찮아요! 😊 다시 한번 도전해보면 어떨까요?';
+            }
+
+            document.getElementById('resultMessage').textContent = message;
+        }
+
+        // Restart writing
+        function restartWriting() {
+            currentIndex = 0;
+            completedCount = 0;
+            skippedCount = 0;
+            sentences = [];
+            totalQualityScore = 0;
+
+            document.getElementById('writingArea').classList.remove('hidden');
+            document.getElementById('sentencesHistory').style.display = 'none';
+            document.getElementById('resultsSection').classList.add('hidden');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            const studyDate = sessionStorage.getItem('studyDate');
+            vocabulary = vocabDB.getDailyWords(2, user.grade, studyDate);
+            showWord();
+        }
+
+        // Initialize
+        initWriting();
+    </script>
+</body>
+
+</html>

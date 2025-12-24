@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>학생 로그인 - 어휘나라</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container navbar-content">
+            <a href="login.html" class="navbar-brand">✨ 어휘나라 (학생용)</a>
+            <ul class="navbar-menu">
+                <!-- Isolated Entry -->
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Login Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="glass-card" style="max-width: 500px; margin: 0 auto;">
+                <div class="text-center mb-4">
+                    <h1>🎓 학생 로그인</h1>
+                    <p class="card-text">아이디와 비밀번호를 입력해주세요</p>
+                </div>
+
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label class="form-label" for="teacherCode">선생님 코드 (5자리)</label>
+                        <input type="text" id="teacherCode" class="form-input" placeholder="선생님 코드를 입력하세요" maxlength="5"
+                            pattern="[0-9]{5}" required>
+                        <small
+                            style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-top: 0.25rem;">
+                            선생님께 받은 5자리 코드를 입력하세요
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="username">아이디</label>
+                        <input type="text" id="username" class="form-input" placeholder="아이디를 입력하세요" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="password">비밀번호</label>
+                        <input type="password" id="password" class="form-input" placeholder="비밀번호를 입력하세요" required>
+                    </div>
+
+                    <div id="errorMessage" class="hidden"
+                        style="color: var(--secondary-500); margin-bottom: 1rem; text-align: center;"></div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        로그인
+                    </button>
+                </form>
+
+                <div class="mt-4"
+                    style="padding: 1rem; background: var(--bg-dark-tertiary); border-radius: var(--radius-md);">
+                    <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                        <strong>💡 테스트 계정:</strong>
+                    </p>
+                    <p style="font-size: 0.875rem; color: var(--text-muted); margin: 0.25rem 0;">
+                        아이디: student1, student2, student3
+                    </p>
+                    <p style="font-size: 0.875rem; color: var(--text-muted); margin: 0.25rem 0;">
+                        비밀번호: 1234
+                    </p>
+                </div>
+            </div>
+
+            <!-- Demo Info Cards -->
+            <div class="grid grid-3 mt-5" style="max-width: 900px; margin-left: auto; margin-right: auto;">
+                <div class="card text-center">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">📇</div>
+                    <h4>플래시카드</h4>
+                    <p class="card-text" style="font-size: 0.875rem;">
+                        카드를 넘기며<br>어휘를 익혀요
+                    </p>
+                </div>
+                <div class="card text-center">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">✍️</div>
+                    <h4>따라 쓰기 연습</h4>
+                    <p class="card-text" style="font-size: 0.875rem;">
+                        뜻을 3번 따라<br>암기해요
+                    </p>
+                </div>
+                <div class="card text-center">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">✍️</div>
+                    <h4>문장 만들기</h4>
+                    <p class="card-text" style="font-size: 0.875rem;">
+                        창의적인 문장을<br>만들어요
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <!-- Config & Data Service -->
+    <script src="../js/firebase-config.js"></script>
+    <script src="../js/data-service.js"></script>
+    <script src="../js/auth.js"></script>
+    <script>
+        // Check if already logged in
+        if (auth.isLoggedIn() && auth.getCurrentUser().role === 'student') {
+            window.location.href = 'dashboard.html';
+        }
+
+        const loginForm = document.getElementById('loginForm');
+        const errorMessage = document.getElementById('errorMessage');
+        const teacherCodeInput = document.getElementById('teacherCode');
+
+        // Add numeric-only validation to teacher code input
+        teacherCodeInput.addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/[^0-9]/g, '');
+        });
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const teacherCode = teacherCodeInput.value.trim();
+
+            if (!teacherCode || teacherCode.length !== 5) {
+                errorMessage.textContent = '5자리 선생님 코드를 입력해주세요.';
+                errorMessage.classList.remove('hidden');
+                return;
+            }
+
+            // Wait for auth login with teacherCode
+            const result = await auth.login(username, password, 'student', teacherCode);
+
+            if (result.success) {
+                // Successful login
+                window.location.href = 'dashboard.html';
+            } else {
+                // Show error
+                errorMessage.textContent = result.message;
+                errorMessage.classList.remove('hidden');
+
+                // Shake animation
+                loginForm.style.animation = 'shake 0.5s';
+                setTimeout(() => {
+                    loginForm.style.animation = '';
+                }, 500);
+            }
+        });
+
+        // Add shake animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+                20%, 40%, 60%, 80% { transform: translateX(10px); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+
+</html>

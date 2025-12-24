@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>선생님 회원가입 - 어휘나라</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container navbar-content">
+            <a href="../index.html" class="navbar-brand">✨ 어휘나라</a>
+            <ul class="navbar-menu">
+                <li><a href="login.html">로그인</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Register Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="glass-card" style="max-width: 600px; margin: 0 auto;">
+                <div class="text-center mb-4">
+                    <h1>👨‍🏫 선생님 회원가입</h1>
+                    <p class="card-text">학생들의 학습을 관리할 선생님 계정을 만들어보세요</p>
+                </div>
+
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label class="form-label" for="school">학교 이름 <span
+                                style="color: var(--secondary-500);">*</span></label>
+                        <input type="text" id="school" class="form-input" placeholder="예: 서울초등학교" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="username">아이디 <span
+                                style="color: var(--secondary-500);">*</span></label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="text" id="username" class="form-input" placeholder="영문 2자 이상, 숫자 허용"
+                                pattern="[a-zA-Z0-9]{2,}" required style="flex: 1;">
+                            <button type="button" id="checkUsernameBtn" class="btn btn-outline"
+                                style="white-space: nowrap; padding: 0 1rem;">
+                                중복 확인
+                            </button>
+                        </div>
+                        <small id="usernameHelp"
+                            style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-top: 0.25rem;">
+                            영문자 2자 이상, 숫자 사용 가능
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="grade">담당 학년 <span
+                                style="color: var(--secondary-500);">*</span></label>
+                        <select id="grade" class="form-input" required>
+                            <option value="">학년을 선택하세요</option>
+                            <option value="1">1학년</option>
+                            <option value="2">2학년</option>
+                            <option value="3">3학년</option>
+                            <option value="4">4학년</option>
+                            <option value="5">5학년</option>
+                            <option value="6">6학년</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="nickname">별명 <span
+                                style="color: var(--secondary-500);">*</span></label>
+                        <input type="text" id="nickname" class="form-input" placeholder="예: 김선생님" required>
+                        <small
+                            style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-top: 0.25rem;">
+                            학생들에게 표시될 이름입니다
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="password">비밀번호 <span
+                                style="color: var(--secondary-500);">*</span></label>
+                        <input type="password" id="password" class="form-input" placeholder="비밀번호를 입력하세요" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="passwordConfirm">비밀번호 확인 <span
+                                style="color: var(--secondary-500);">*</span></label>
+                        <input type="password" id="passwordConfirm" class="form-input" placeholder="비밀번호를 다시 입력하세요"
+                            required>
+                    </div>
+
+                    <div id="errorMessage" class="hidden"
+                        style="color: var(--secondary-500); margin-bottom: 1rem; text-align: center;"></div>
+
+                    <div id="successMessage" class="hidden"
+                        style="color: var(--success-500); margin-bottom: 1rem; text-align: center; padding: 1rem; background: var(--bg-dark-tertiary); border-radius: var(--radius-md);">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        회원가입
+                    </button>
+                </form>
+
+                <div class="mt-3 text-center">
+                    <p style="font-size: 0.875rem; color: var(--text-muted);">
+                        이미 계정이 있으신가요? <a href="login.html" style="color: var(--primary-400);">로그인</a>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Info Cards -->
+            <div class="grid grid-3 mt-5" style="max-width: 900px; margin-left: auto; margin-right: auto;">
+                <div class="card text-center">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">🔐</div>
+                    <h4>안전한 계정</h4>
+                    <p class="card-text" style="font-size: 0.875rem;">
+                        개인정보는<br>안전하게 보호됩니다
+                    </p>
+                </div>
+                <div class="card text-center">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">👥</div>
+                    <h4>학생 관리</h4>
+                    <p class="card-text" style="font-size: 0.875rem;">
+                        손쉬운 학생<br>계정 관리
+                    </p>
+                </div>
+                <div class="card text-center">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">📊</div>
+                    <h4>학습 분석</h4>
+                    <p class="card-text" style="font-size: 0.875rem;">
+                        실시간 학습<br>현황 파악
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <!-- Config & Data Service -->
+    <script src="../js/firebase-config.js"></script>
+    <script src="../js/data-service.js"></script>
+    <script src="../js/auth.js"></script>
+    <script>
+        const registerForm = document.getElementById('registerForm');
+        const errorMessage = document.getElementById('errorMessage');
+        const successMessage = document.getElementById('successMessage');
+        const usernameInput = document.getElementById('username');
+        const checkUsernameBtn = document.getElementById('checkUsernameBtn');
+        const usernameHelp = document.getElementById('usernameHelp');
+
+        let isUsernameChecked = false;
+        let lastCheckedUsername = '';
+
+        // Username input validation
+        usernameInput.addEventListener('input', (e) => {
+            const value = e.target.value;
+            // Allow only alphanumeric characters
+            e.target.value = value.replace(/[^a-zA-Z0-9]/g, '');
+
+            // Reset check status if username changed
+            if (value !== lastCheckedUsername) {
+                isUsernameChecked = false;
+                usernameHelp.style.color = 'var(--text-muted)';
+                usernameHelp.textContent = '영문자 2자 이상, 숫자 사용 가능';
+            }
+        });
+
+        // Check username duplicate
+        checkUsernameBtn.addEventListener('click', async () => {
+            const username = usernameInput.value.trim();
+
+            // Validation
+            if (!username) {
+                usernameHelp.style.color = 'var(--secondary-500)';
+                usernameHelp.textContent = '아이디를 입력해주세요.';
+                return;
+            }
+
+            if (username.length < 2) {
+                usernameHelp.style.color = 'var(--secondary-500)';
+                usernameHelp.textContent = '아이디는 최소 2자 이상이어야 합니다.';
+                return;
+            }
+
+            if (!/^[a-zA-Z]/.test(username)) {
+                usernameHelp.style.color = 'var(--secondary-500)';
+                usernameHelp.textContent = '아이디는 영문자로 시작해야 합니다.';
+                return;
+            }
+
+            // Check duplicate
+            checkUsernameBtn.disabled = true;
+            checkUsernameBtn.textContent = '확인 중...';
+
+            try {
+                await dbService.init();
+                const existingUser = await dbService.getUser('username', username);
+
+                if (existingUser) {
+                    usernameHelp.style.color = 'var(--secondary-500)';
+                    usernameHelp.textContent = '❌ 이미 사용중인 아이디입니다.';
+                    isUsernameChecked = false;
+                } else {
+                    usernameHelp.style.color = 'var(--success-500)';
+                    usernameHelp.textContent = '✅ 사용 가능한 아이디입니다.';
+                    isUsernameChecked = true;
+                    lastCheckedUsername = username;
+                }
+            } catch (error) {
+                usernameHelp.style.color = 'var(--secondary-500)';
+                usernameHelp.textContent = '중복 확인 중 오류가 발생했습니다.';
+                isUsernameChecked = false;
+            } finally {
+                checkUsernameBtn.disabled = false;
+                checkUsernameBtn.textContent = '중복 확인';
+            }
+        });
+
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Hide previous messages
+            errorMessage.classList.add('hidden');
+            successMessage.classList.add('hidden');
+
+            const username = usernameInput.value.trim();
+            const school = document.getElementById('school').value.trim();
+            const grade = document.getElementById('grade').value;
+            const nickname = document.getElementById('nickname').value.trim();
+            const password = document.getElementById('password').value;
+            const passwordConfirm = document.getElementById('passwordConfirm').value;
+
+            // Validation
+            if (!username || !school || !grade || !nickname || !password) {
+                errorMessage.textContent = '모든 필드를 입력해주세요.';
+                errorMessage.classList.remove('hidden');
+                return;
+            }
+
+            if (!isUsernameChecked || username !== lastCheckedUsername) {
+                errorMessage.textContent = '아이디 중복 확인을 해주세요.';
+                errorMessage.classList.remove('hidden');
+                usernameHelp.style.color = 'var(--secondary-500)';
+                usernameHelp.textContent = '⚠️ 중복 확인 필요';
+                return;
+            }
+
+            if (password !== passwordConfirm) {
+                errorMessage.textContent = '비밀번호가 일치하지 않습니다.';
+                errorMessage.classList.remove('hidden');
+                return;
+            }
+
+            if (password.length < 4) {
+                errorMessage.textContent = '비밀번호는 최소 4자 이상이어야 합니다.';
+                errorMessage.classList.remove('hidden');
+                return;
+            }
+
+            // Register teacher
+            const result = await auth.registerTeacher({
+                username: username,
+                school: school,
+                grade: grade,
+                nickname: nickname,
+                password: password
+            });
+
+            if (result.success) {
+                // Show success message with teacher code
+                successMessage.innerHTML = `
+                    <div style="margin-bottom: 1rem;">
+                        <strong>✅ 회원가입 성공!</strong>
+                    </div>
+                    <div style="margin-bottom: 0.5rem;">
+                        선생님 코드: <strong style="font-size: 1.5rem; color: var(--primary-400); font-family: monospace;">${result.teacherCode}</strong>
+                    </div>
+                    <div style="font-size: 0.875rem; color: var(--text-secondary);">
+                        이 코드를 학생들에게 알려주세요!
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        <button onclick="window.location.href='login.html'" class="btn btn-secondary" style="width: 100%;">
+                            로그인하러 가기
+                        </button>
+                    </div>
+                `;
+                successMessage.classList.remove('hidden');
+
+                // Clear form
+                registerForm.reset();
+            } else {
+                // Show error
+                errorMessage.textContent = result.message;
+                errorMessage.classList.remove('hidden');
+
+                // Shake animation
+                registerForm.style.animation = 'shake 0.5s';
+                setTimeout(() => {
+                    registerForm.style.animation = '';
+                }, 500);
+            }
+        });
+
+        // Add shake animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+                20%, 40%, 60%, 80% { transform: translateX(10px); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+
+</html>

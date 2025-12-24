@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>플래시카드 학습 - 어휘나라</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container navbar-content">
+            <a href="dashboard.html" class="navbar-brand">✨ 어휘나라</a>
+            <ul class="navbar-menu">
+                <li><a href="dashboard.html" class="navbar-link">← 대시보드로</a></li>
+                <li><span id="userName" class="navbar-link"></span></li>
+                <li><button onclick="auth.logout()" class="btn btn-outline btn-sm">로그아웃</button></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <section class="container mt-4 mb-5">
+        <!-- Header -->
+        <div class="glass-card mb-4">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <h1>📇 플래시카드 학습</h1>
+                    <p class="card-text">카드를 클릭하여 뜻을 확인하세요</p>
+                </div>
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <span class="badge badge-primary" id="progressBadge">1 / 10</span>
+                </div>
+            </div>
+            <div class="progress-bar mt-3">
+                <div class="progress-fill" id="overallProgress" style="width: 10%"></div>
+            </div>
+        </div>
+
+        <!-- Flashcard -->
+        <div class="flashcard" id="flashcard">
+            <div class="flashcard-inner">
+                <div class="flashcard-front">
+                    <div class="flashcard-word" id="wordFront"></div>
+                    <div class="flashcard-hanja" id="hanjaFront"></div>
+                    <div class="flashcard-meaning" id="meaningFront"
+                        style="font-size: 1.5rem; color: var(--primary-color); margin-top: 1rem; font-weight: bold;">
+                    </div>
+                    <p style="color: var(--text-muted); margin-top: 2rem;">
+                        카드를 클릭하여 예문 보기 👆
+                    </p>
+                </div>
+                <div class="flashcard-back">
+                    <div
+                        style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: var(--radius-md); text-align: left;">
+                        <p
+                            style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.5rem; text-align: center;">
+                            <strong>예문 (Examples)</strong>
+                        </p>
+                        <ul id="exampleList"
+                            style="color: var(--text-secondary); padding-left: 1.2rem; line-height: 1.6;"></ul>
+                    </div>
+                    <p style="color: var(--text-muted); margin-top: 2rem;">
+                        다시 클릭하여 단어 보기 👆
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="mt-4" style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+            <button id="prevBtn" class="btn btn-outline" onclick="previousCard()">
+                ← 이전
+            </button>
+
+            <button class="btn btn-secondary" onclick="flipCard()">
+                🔄 카드 뒤집기
+            </button>
+
+            <button id="nextBtn" class="btn btn-primary" onclick="nextCard()">
+                다음 →
+            </button>
+        </div>
+
+        <!-- Quiz Section (appears after reviewing all cards) -->
+        <div id="quizSection" class="glass-card mt-5 hidden">
+            <h2 class="text-center mb-4">🎯 학습 확인 퀴즈</h2>
+            <div id="quizContent"></div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsSection" class="glass-card mt-5 hidden">
+            <div class="text-center">
+                <div style="font-size: 5rem; margin-bottom: 1rem;">🎉</div>
+                <h2>학습 완료!</h2>
+                <h2>학습 완료!</h2>
+
+                <p class="card-text" id="resultMessage"></p>
+
+                <div class="grid grid-2 mt-4 mb-4" style="max-width: 600px; margin-left: auto; margin-right: auto;">
+                    <div class="card">
+                        <div class="stats-number" id="correctCount">0</div>
+                        <div class="stats-label">정답</div>
+                    </div>
+                    <div class="card">
+                        <div class="stats-number" id="wrongCount">0</div>
+                        <div class="stats-label">오답</div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                    <button onclick="restartLearning()" class="btn btn-secondary">
+                        🔄 다시 학습하기
+                    </button>
+                    <a href="typing.html" class="btn btn-primary">
+                        다음 단계 (타이핑) →
+                    </a>
+                    <a href="dashboard.html" class="btn btn-outline">
+                        대시보드로
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="../js/auth.js"></script>
+    <script src="../js/hanja-data.js"></script>
+    <script src="../js/vocab-data.js"></script>
+    <script>
+        // Check authentication
+        if (!auth.requireAuth('student')) {
+            window.location.href = 'login.html';
+        }
+
+        const user = auth.getCurrentUser();
+        document.getElementById('userName').textContent = `${user.name} (${user.grade}학년)`;
+
+        // Learning state
+        let currentIndex = 0;
+        let vocabulary = [];
+        let isFlipped = false;
+        let score = 0;
+        let quizAnswers = [];
+
+        // Initialize learning
+        function initLearning() {
+            // Get vocabulary for student's grade (Daily 2 words)
+            const studyDate = sessionStorage.getItem('studyDate');
+            vocabulary = vocabDB.getDailyWords(2, user.grade, studyDate);
+
+            if (vocabulary.length === 0) {
+                alert('학습할 어휘가 없습니다. 관리자에게 문의하세요.');
+                window.location.href = 'dashboard.html';
+                return;
+            }
+
+            showCard();
+        }
+
+        // Show current card
+        function showCard() {
+            const vocab = vocabulary[currentIndex];
+
+            document.getElementById('wordFront').textContent = vocab.word;
+
+            // Hanja processing
+            let hanjaDisplay = '';
+            if (vocab.hanja) {
+                const chars = vocab.hanja.split('');
+                const details = chars.map(char => {
+                    let info = char;
+                    if (typeof hanjaDic !== 'undefined' && hanjaDic[char]) {
+                        // Find a definition. Prioritize specific ones if needed, but here just take first or matching.
+                        // vocab-data.js usually has mapped ones in 'hanja' field string, but we want detailed look up.
+                        // Simple first match:
+                        const entry = hanjaDic[char][0];
+                        info = `${char}(${entry.def} ${entry.kor})`;
+                    }
+                    return info;
+                });
+                hanjaDisplay = details.join(' ');
+            }
+            document.getElementById('hanjaFront').textContent = hanjaDisplay || vocab.hanja;
+
+            document.getElementById('meaningFront').textContent = vocab.meaning;
+
+            // Examples processing
+            const exampleList = document.getElementById('exampleList');
+            exampleList.innerHTML = '';
+
+            // Pick up to 5 examples. If fewer exist, show all.
+            // If they are static in data, try to randomize or just show top 5.
+            // User requested "5 sentences".
+            let examples = vocab.examples || [];
+            if (examples.length > 5) {
+                // Shuffle and pick 5 if many
+                examples = examples.sort(() => 0.5 - Math.random()).slice(0, 5);
+            }
+
+            examples.forEach(ex => {
+                const li = document.createElement('li');
+                li.style.marginBottom = '0.5rem';
+                li.textContent = ex;
+                exampleList.appendChild(li);
+            });
+
+            // Update progress
+            document.getElementById('progressBadge').textContent =
+                `${currentIndex + 1} / ${vocabulary.length}`;
+            document.getElementById('overallProgress').style.width =
+                ((currentIndex + 1) / vocabulary.length * 100) + '%';
+
+
+            // Update button states
+            document.getElementById('prevBtn').disabled = currentIndex === 0;
+            document.getElementById('prevBtn').style.opacity = currentIndex === 0 ? '0.5' : '1';
+
+            // Reset flip
+            if (isFlipped) {
+                flipCard();
+            }
+        }
+
+        // Flip card
+        function flipCard() {
+            const flashcard = document.getElementById('flashcard');
+            flashcard.classList.toggle('flipped');
+            isFlipped = !isFlipped;
+        }
+
+        // Click on card to flip
+        document.getElementById('flashcard').addEventListener('click', flipCard);
+
+        // Previous card
+        function previousCard() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                showCard();
+            }
+        }
+
+        // Next card
+        function nextCard() {
+            if (currentIndex < vocabulary.length - 1) {
+                currentIndex++;
+                showCard();
+            } else {
+                // All cards reviewed, show quiz
+                showQuiz();
+            }
+        }
+
+        // Show quiz
+        function showQuiz() {
+            document.getElementById('quizSection').classList.remove('hidden');
+            document.getElementById('quizSection').scrollIntoView({ behavior: 'smooth' });
+
+            let quizHTML = '<div style="display: flex; flex-direction: column; gap: 2rem;">';
+
+            vocabulary.forEach((vocab, index) => {
+                // Create multiple choice question
+                const options = generateOptions(vocab);
+
+                quizHTML += `
+                    <div class="card">
+                        <h4>문제 ${index + 1}</h4>
+                        <p style="font-size: 1.25rem; margin: 1rem 0;">
+                            <strong>${vocab.word}</strong> (${vocab.hanja})
+                        </p>
+                        <p class="card-text mb-3">뜻을 고르세요:</p>
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem;" id="quiz-${index}">
+                            ${options.map((opt, i) => `
+                                <button 
+                                    class="btn btn-outline quiz-option" 
+                                    data-quiz="${index}" 
+                                    data-answer="${opt === vocab.meaning}"
+                                    onclick="selectAnswer(${index}, this, ${opt === vocab.meaning})"
+                                >
+                                    ${i + 1}. ${opt}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+
+            quizHTML += '</div>';
+            quizHTML += `
+                <div class="mt-4 text-center">
+                    <button onclick="submitQuiz()" class="btn btn-primary btn-lg">
+                        제출하기
+                    </button>
+                </div>
+            `;
+
+            document.getElementById('quizContent').innerHTML = quizHTML;
+        }
+
+        // Generate multiple choice options
+        function generateOptions(correctVocab) {
+            const options = [correctVocab.meaning];
+            const allVocab = vocabDB.vocabulary.filter(v => v.id !== correctVocab.id);
+
+            while (options.length < 4 && allVocab.length > 0) {
+                const randomIndex = Math.floor(Math.random() * allVocab.length);
+                const meaning = allVocab[randomIndex].meaning;
+
+                if (!options.includes(meaning)) {
+                    options.push(meaning);
+                }
+
+                allVocab.splice(randomIndex, 1);
+            }
+
+            // Shuffle options
+            return options.sort(() => Math.random() - 0.5);
+        }
+
+        // Select answer
+        function selectAnswer(quizIndex, button, isCorrect) {
+            const quizDiv = document.getElementById(`quiz-${quizIndex}`);
+            const buttons = quizDiv.querySelectorAll('.quiz-option');
+
+            // Remove previous selection
+            buttons.forEach(btn => {
+                btn.classList.remove('btn-success', 'btn-secondary');
+                btn.classList.add('btn-outline');
+                btn.style.opacity = '1';
+            });
+
+            // Highlight selected
+            button.classList.remove('btn-outline');
+            button.classList.add('btn-secondary');
+
+            // Store answer
+            quizAnswers[quizIndex] = isCorrect;
+        }
+
+        // Submit quiz
+        function submitQuiz() {
+            if (quizAnswers.length < vocabulary.length) {
+                alert('모든 문제에 답해주세요!');
+                return;
+            }
+
+            // Calculate score
+            const correct = quizAnswers.filter(a => a).length;
+            const wrong = vocabulary.length - correct;
+            score = Math.round((correct / vocabulary.length) * 100);
+
+            // Show correct answers
+            vocabulary.forEach((vocab, index) => {
+                const quizDiv = document.getElementById(`quiz-${index}`);
+                const buttons = quizDiv.querySelectorAll('.quiz-option');
+
+                buttons.forEach(btn => {
+                    const isCorrectAnswer = btn.getAttribute('data-answer') === 'true';
+                    const wasSelected = btn.classList.contains('btn-secondary');
+
+                    btn.disabled = true;
+                    btn.classList.remove('btn-outline', 'btn-secondary');
+
+                    if (isCorrectAnswer) {
+                        btn.classList.add('btn-success');
+                    } else if (wasSelected) {
+                        btn.classList.add('btn-secondary');
+                        btn.style.opacity = '0.5';
+                    } else {
+                        btn.style.opacity = '0.3';
+                    }
+                });
+            });
+
+            // Update progress
+            const currentProgress = user.progress.flashcardsCompleted || 0;
+            auth.updateProgress({
+                flashcardsCompleted: currentProgress + vocabulary.length
+            });
+
+            // Save history
+            auth.saveStudyHistory({
+                type: 'flashcard',
+                vocabularyCount: vocabulary.length,
+                score: score,
+                correct: correct,
+                wrong: wrong
+            });
+
+            // Show results
+            setTimeout(() => {
+                // document.getElementById('scoreBadge').textContent = `점수: ${score}`;
+                document.getElementById('resultsSection').classList.remove('hidden');
+                document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+
+                // document.getElementById('finalScore').textContent = score + '점';
+                document.getElementById('correctCount').textContent = correct;
+                document.getElementById('wrongCount').textContent = wrong;
+
+                let message = '';
+                if (score >= 90) {
+                    message = '완벽해요! 🌟 다음 단계로 넘어가볼까요?';
+                } else if (score >= 70) {
+                    message = '잘했어요! 👏 조금만 더 연습하면 완벽해질 거예요!';
+                } else if (score >= 50) {
+                    message = '좋아요! 💪 복습하면 더 좋은 결과가 있을 거예요!';
+                } else {
+                    message = '괜찮아요! 😊 다시 한번 학습해보면 어떨까요?';
+                }
+
+                document.getElementById('resultMessage').textContent = message;
+            }, 500);
+        }
+
+        // Restart learning
+        function restartLearning() {
+            currentIndex = 0;
+            score = 0;
+            quizAnswers = [];
+            isFlipped = false;
+
+            document.getElementById('quizSection').classList.add('hidden');
+            document.getElementById('resultsSection').classList.add('hidden');
+            // document.getElementById('scoreBadge').textContent = '점수: 0';
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // Get new vocabulary (Refresh daily words if needed, or just reload same)
+            const studyDate = sessionStorage.getItem('studyDate');
+            vocabulary = vocabDB.getDailyWords(2, user.grade, studyDate);
+            showCard();
+        }
+
+        // Initialize
+        initLearning();
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') {
+                previousCard();
+            } else if (e.key === 'ArrowRight') {
+                nextCard();
+            } else if (e.key === ' ') {
+                e.preventDefault();
+                flipCard();
+            }
+        });
+    </script>
+</body>
+
+</html>

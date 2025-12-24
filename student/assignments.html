@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>배포된 학습지 - 어휘나라</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="container navbar-content">
+            <a href="../index.html" class="navbar-brand">✨ 어휘나라</a>
+            <ul class="navbar-menu">
+                <li><a href="dashboard.html" class="navbar-link">대시보드</a></li>
+                <li><a href="assignments.html" class="navbar-link active">학습지</a></li>
+                <li><button onclick="auth.logout()" class="btn btn-outline btn-sm">로그아웃</button></li>
+            </ul>
+        </div>
+    </nav>
+
+    <section class="container mt-4">
+        <h2 class="mb-3">📁 배포된 학습지</h2>
+        <div class="glass-card">
+            <div id="assignmentList" class="grid grid-2">
+                <!-- Assignments will be loaded here -->
+            </div>
+        </div>
+    </section>
+
+    <script src="../js/auth.js"></script>
+    <script>
+        if (!auth.requireAuth('student')) window.location.href = 'login.html';
+
+        const listDiv = document.getElementById('assignmentList');
+        const assignments = JSON.parse(localStorage.getItem('assignments') || '[]');
+
+        if (assignments.length === 0) {
+            listDiv.innerHTML = '<p class="text-center" style="grid-column: 1/-1; padding: 2rem; color: #aaa;">도착한 학습지가 없습니다.</p>';
+        } else {
+            listDiv.innerHTML = assignments.map(a => `
+                <div class="card">
+                    <h3>${a.title}</h3>
+                    <p style="color: #aaa; font-size: 0.9rem;">${a.dateStr}</p>
+                    <div class="mt-3">
+                        <a href="worksheet.html?id=${a.id}" class="btn btn-primary btn-sm">✍️ 작성하기</a>
+                    </div>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+
+</html>

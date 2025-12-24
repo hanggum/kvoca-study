@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>학생 대시보드 - 어휘나라</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container navbar-content">
+            <a href="dashboard.html" class="navbar-brand">✨ 어휘나라 (학생용)</a>
+            <ul class="navbar-menu">
+                <li><a href="dashboard.html" class="navbar-link">대시보드</a></li>
+                <li><span id="userName" class="navbar-link"></span></li>
+                <li><button onclick="auth.logout()" class="btn btn-outline btn-sm">로그아웃</button></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <section class="container mt-4 mb-5">
+        <!-- Daily Words Section -->
+        <div class="glass-card mb-4" id="dailyWordsSection">
+            <!-- Calendar Strip -->
+            <div class="calendar-strip mb-3" id="calendarStrip"
+                style="display: grid; grid-template-columns: repeat(14, 1fr); gap: 0px; row-gap: 0px;">
+                <!-- Filled by JS -->
+            </div>
+
+            <h2 class="mb-3" id="dailyWordsTitle">📅 오늘의 학습 단어</h2>
+            <div id="dailyWordsList" style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;"></div>
+
+            <!-- Study Actions -->
+            <div id="studyActions" class="mt-3 text-center" style="display: none;">
+                <p class="text-muted mb-2">이 날짜의 단어로 학습하기:</p>
+                <div style="display: flex; gap: 0.5rem; justify-content: center;">
+                    <button onclick="startStudy('flashcards')" class="btn btn-sm btn-outline">📇 플래시카드</button>
+                    <button onclick="startStudy('typing')" class="btn btn-sm btn-outline">⌨️ 따라쓰기</button>
+                    <button onclick="startStudy('writing')" class="btn btn-sm btn-outline">✍️ 문장만들기</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Stats & Worksheets Info (Compact) -->
+        <!-- Progress Stats & Worksheets Info (Compact) -->
+        <div class="grid grid-4 mb-4" style="gap: 1rem;">
+            <div class="card stats-card" style="padding: 0.75rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <span style="font-size: 0.85rem; color: var(--text-muted);">플래시카드</span>
+                    <span class="stats-number" id="flashcardsCount" style="font-size: 1.25rem;">0</span>
+                </div>
+                <div class="progress-bar" style="height: 4px; width: 100%;">
+                    <div class="progress-fill" id="flashcardsProgress" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="card stats-card" style="padding: 0.75rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <span style="font-size: 0.85rem; color: var(--text-muted);">타이핑</span>
+                    <span class="stats-number" id="typingCount" style="font-size: 1.25rem;">0</span>
+                </div>
+                <div class="progress-bar" style="height: 4px; width: 100%;">
+                    <div class="progress-fill" id="typingProgress" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="card stats-card" style="padding: 0.75rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <span style="font-size: 0.85rem; color: var(--text-muted);">문장 만들기</span>
+                    <span class="stats-number" id="writingCount" style="font-size: 1.25rem;">0</span>
+                </div>
+                <div class="progress-bar" style="height: 4px; width: 100%;">
+                    <div class="progress-fill" id="writingProgress" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="card stats-card"
+                style="padding: 0.75rem; display: flex; flex-direction: column; justify-content: center;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.85rem; color: var(--text-muted);">밀린 학습지</span>
+                    <span class="stats-number" id="worksheetPendingCount"
+                        style="font-size: 1.25rem; color: var(--warning-color);">0</span>
+                </div>
+                <div style="font-size: 0.7rem; color: var(--text-secondary); text-align: right; margin-top: 0.25rem;"
+                    id="worksheetTotalInfo">
+                    0/0 완료
+                </div>
+            </div>
+        </div>
+
+        <!-- Learning Modules -->
+
+        <div class="grid grid-4 mb-4"> <!-- Using grid-4 for 1-row layout -->
+            <a href="flashcards.html" class="card" style="text-decoration: none; color: inherit; cursor: pointer;">
+                <div style="font-size: 4rem; text-align: center; margin-bottom: 1rem;">📇</div>
+                <h3 class="card-title">플래시카드</h3>
+                <p class="card-text">
+                    어휘를 카드로 넘기며 단어, 뜻, 한자를 자연스럽게 익혀요.
+                </p>
+                <div class="mt-3">
+                    <span class="badge badge-primary">1단계</span>
+                    <span class="badge badge-success">기억력 향상</span>
+                </div>
+            </a>
+
+            <a href="typing.html" class="card" style="text-decoration: none; color: inherit; cursor: pointer;">
+                <div style="font-size: 4rem; text-align: center; margin-bottom: 1rem;">⌨️</div>
+                <h3 class="card-title">따라 쓰기 연습</h3>
+                <p class="card-text">
+                    어휘의 뜻을 3번 따라 쓰며 정확하게 암기해요.
+                </p>
+                <div class="mt-3">
+                    <span class="badge badge-primary">2단계</span>
+                    <span class="badge badge-success">암기력 향상</span>
+                </div>
+            </a>
+
+            <a href="writing.html" class="card" style="text-decoration: none; color: inherit; cursor: pointer;">
+                <div style="font-size: 4rem; text-align: center; margin-bottom: 1rem;">✍️</div>
+                <h3 class="card-title">문장 만들기</h3>
+                <p class="card-text">
+                    배운 어휘로 나만의 창의적인 문장을 만들어요.
+                </p>
+                <div class="mt-3">
+                    <span class="badge badge-primary">3단계</span>
+                    <span class="badge badge-warning">창의력 향상</span>
+                </div>
+            </a>
+
+            <a href="assignments.html" class="card" style="text-decoration: none; color: inherit; cursor: pointer;">
+                <div style="font-size: 4rem; text-align: center; margin-bottom: 1rem;">📁</div>
+                <h3 class="card-title">배포된 학습지</h3>
+                <p class="card-text">
+                    선생님이 보내주신 학습지를 작성하고 제출해요.
+                </p>
+                <div class="mt-3">
+                    <span class="badge badge-primary">숙제</span>
+                    <span class="badge badge-success" id="assignmentBadge">0개 도착</span>
+                </div>
+            </a>
+        </div>
+
+        <!-- Recent Activity -->
+        <h2 class="mb-3">📊 최근 학습 활동</h2>
+        <div class="glass-card">
+            <div id="recentActivity">
+                <p class="card-text text-center" style="padding: 2rem;">
+                    아직 학습 기록이 없습니다. 위의 학습 모듈을 시작해보세요!
+                </p>
+            </div>
+        </div>
+
+        <!-- Study Tips -->
+        <div class="grid grid-2 mt-4">
+            <div class="card">
+                <h3>💡 학습 팁</h3>
+                <ul style="color: var(--text-secondary); line-height: 2;">
+                    <li>매일 조금씩 꾸준히 학습하세요</li>
+                    <li>플래시카드로 단어를 먼저 익히세요</li>
+                    <li>타이핑으로 철자를 정확히 외우세요</li>
+                    <li>문장 만들기로 어휘를 완전히 내 것으로 만드세요</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3>🎯 학습 목표</h3>
+                <div style="margin-top: 1rem;">
+                    <div style="margin-bottom: 1rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span>이번 주 목표</span>
+                            <span id="weeklyGoalText">0/10</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="weeklyGoalProgress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <p class="card-text" style="font-size: 0.875rem;">
+                        매주 10개의 새로운 어휘를 학습하는 것을 목표로 해요!
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="../js/auth.js"></script>
+    <script src="../js/hanja-data.js"></script>
+    <script src="../js/vocab-data.js"></script>
+    <script>
+        // Check authentication
+        if (!auth.requireAuth('student')) {
+            window.location.href = 'login.html';
+        }
+
+        const user = auth.getCurrentUser();
+        const progress = user.progress || {
+            flashcardsCompleted: 0,
+            typingCompleted: 0,
+            writingCompleted: 0,
+            currentLesson: 0,
+            totalScore: 0
+        };
+
+        // Update welcome message & Daily Words
+        // document.getElementById('welcomeMessage').textContent = `환영합니다, ${user.name}님! 👋`; // Removed
+        document.getElementById('userName').textContent = `${user.name} (${user.grade}학년)`;
+
+        // Load Daily Words
+        // Calendar & Daily Words Logic
+        let selectedDate = new Date();
+        let currentCalendarDate = new Date();
+
+        function changeMonth(offset) {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + offset);
+            initCalendar();
+        }
+
+        function initCalendar() {
+            const calendarStrip = document.getElementById('calendarStrip');
+            const today = new Date();
+
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth(); // 0-indexed
+
+            // Get days in month
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const firstDayDow = new Date(year, month, 1).getDay(); // 0(Sun) to 6(Sat)
+
+            let html = '';
+
+            // Add Month Header with Nav
+            html += `<div style="grid-column: 1 / -1; display: flex; justify-content: center; align-items: center; gap: 1rem; margin-bottom: 5px; color: var(--text-primary); font-size: 1.1rem;">
+                <button onclick="changeMonth(-1)" class="btn btn-sm btn-outline" style="padding: 2px 8px; border: none; background: rgba(255,255,255,0.1);">◀</button>
+                <span style="font-weight: bold;">${year}년 ${month + 1}월</span>
+                <button onclick="changeMonth(1)" class="btn btn-sm btn-outline" style="padding: 2px 8px; border: none; background: rgba(255,255,255,0.1);">▶</button>
+            </div>`;
+
+            // Header Row
+            const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+            dayNames.push(...dayNames);
+
+            dayNames.forEach(name => {
+                html += `<div style="text-align: center; font-size: 0.9rem; font-weight: bold; color: var(--text-secondary); padding-bottom: 0px;">${name}</div>`;
+            });
+
+            // Spacers for 1st day alignment
+            for (let i = 0; i < firstDayDow; i++) {
+                html += `<div></div>`;
+            }
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                // Check if matches today
+                const isToday = (d === today.getDate() && month === today.getMonth() && year === today.getFullYear());
+                // Check if matches selected
+                const isSelected = (d === selectedDate.getDate() && month === selectedDate.getMonth() && year === selectedDate.getFullYear());
+
+                // Base style
+                let style = 'width: 100%; display: flex; align-items: center; justify-content: center; padding: 0px; aspect-ratio: 1.6; border: none; background: transparent; color: var(--text-primary); cursor: pointer; border-radius: 4px;';
+
+                if (isSelected) {
+                    style += ' background: var(--primary-color); color: white;';
+                }
+
+                if (isToday) {
+                    style = style.replace('border: none;', ''); // Remove base
+                    style += ' border: 2px solid var(--accent-color, #ff6b6b);'; // Explicit Today Color
+                }
+
+                html += `
+                    <button onclick="selectDate('${year}-${month + 1}-${d}')" style="${style}">
+                        <span style="font-weight: bold; font-size: 1.1rem;">${d}</span>
+                    </button>
+                `;
+            }
+
+            calendarStrip.innerHTML = html;
+        }
+
+        function selectDate(dateStr) {
+            selectedDate = new Date(dateStr);
+            sessionStorage.setItem('studyDate', dateStr); // Store for modules
+            initCalendar(); // Re-render to update active state
+            loadDailyWords(dateStr);
+        }
+
+        async function loadDailyWords(dateStr) {
+            const date = new Date(dateStr);
+            const isoDate = date.toISOString().split('T')[0]; // Safe if local
+
+            // Sync with DB (Check for teacher updates)
+            try {
+                if (typeof dbService !== 'undefined') {
+                    // This is async
+                    const plan = await dbService.getDailyPlan(isoDate, user.grade);
+                    if (plan && plan.words) {
+                        // Update local storage to match teacher's plan
+                        // vocabDB expects key `daily_words_${grade}_${isoDate}`
+                        const key = `daily_words_${user.grade}_${isoDate}`;
+                        localStorage.setItem(key, JSON.stringify(plan.words));
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to sync daily plan", e);
+            }
+
+            // Now get from (potentially updated) localStorage logic
+            // Note: dateStr from calendar might be different from isoDate if Timezone differs.
+            // But selectDate uses constructed string e.g. 2024-12-22.
+            // getDailyWords uses new Date(dateStr) -> isoString.
+            // Ensure consistency. 
+            // If dateStr is YYYY-MM-DD, new Date(dateStr) is UTC. .toISOString().split('T')[0] is that date.
+            // Correct.
+
+            const options = { month: 'long', day: 'numeric', weekday: 'long' };
+            const formattedDate = date.toLocaleDateString('ko-KR', options);
+
+            document.getElementById('dailyWordsTitle').innerHTML = `📅 오늘의 학습 단어 <span style="font-size: 1rem; color: var(--text-secondary); font-weight: normal; margin-left: 0.5rem;">(${formattedDate})</span>`;
+
+            const listEl = document.getElementById('dailyWordsList');
+            const actionsEl = document.getElementById('studyActions');
+
+            // Get words
+            // Correct dateStr format for getDailyWords? It expects ISO or similar.
+            // vocabDB.getDailyWords uses 'new Date(dateStr)'. 
+            // '2024-12-22' is parsed as UTC in some browsers, local in others.
+            // Let's use specific YYYY/MM/DD or ensure logic.
+            // vocabDB logic: new Date(dateStr).toISOString().split('T')[0]
+            // If I pass '2024-12-22' (local), and it's parsed as UTC, and my timezone is +9...
+            // 2024-12-22 00:00 UTC = 2024-12-22 09:00 KST. Same date.
+            // If I am -5 EST. 2024-12-22 00:00 UTC = 2024-12-21 19:00 EST. Prev date.
+            // Risk of timezone shift. 
+            // Better to pass constructed date object or local ISO string logic.
+            // Let's rely on string passing for now and hope vocabDB handles it or assume consistent formatting.
+
+            const words = vocabDB.getDailyWords(2, user.grade, dateStr);
+
+            if (words.length > 0) {
+                listEl.innerHTML = words.map(vocab => {
+                    let hanjaDisplay = vocab.hanja || '';
+                    if (hanjaDisplay && typeof hanjaDic !== 'undefined') {
+                        const chars = hanjaDisplay.split('');
+                        const details = chars.map(char => {
+                            if (hanjaDic[char]) {
+                                const entry = hanjaDic[char][0];
+                                return `${char}(${entry.def} ${entry.kor})`;
+                            }
+                            return char;
+                        });
+                        hanjaDisplay = details.join(' ');
+                    }
+                    return `
+                    <div class="card" style="min-width: 250px; text-align: center; padding: 1.5rem; background: rgba(255,255,255,0.05);">
+                        <div style="font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">${vocab.word}</div>
+                        <div style="font-size: 1.1rem; color: var(--text-secondary); margin-bottom: 0.5rem;">${hanjaDisplay}</div>
+                        <div style="color: var(--text-primary); font-weight: 500;">${vocab.meaning}</div>
+                    </div>
+                    `;
+                }).join('');
+                actionsEl.style.display = 'block';
+            } else {
+                // Check if weekend
+                const dow = date.getDay();
+                if (dow === 0 || dow === 6) {
+                    listEl.innerHTML = `
+                        <div style="width:100%; text-align:center; padding: 2rem;">
+                            <div style="font-size: 3rem; marginBottom: 1rem;">🏖️</div>
+                            <h3>오늘은 쉬는 날이에요!</h3>
+                            <p class="text-muted">주말에는 푹 쉬고 충전해요.</p>
+                        </div>
+                    `;
+                } else {
+                    listEl.innerHTML = '<p class="text-center" style="color: var(--text-muted);">학습할 단어가 설정되지 않았습니다.</p>';
+                }
+                actionsEl.style.display = 'none';
+            }
+        }
+
+        function startStudy(module) {
+            // Already stored date in sessionStorage selectDate
+            window.location.href = module + '.html';
+        }
+
+        // Init
+        const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD in local time usually
+        // Or manual construct
+        const t = new Date();
+        const tStr = `${t.getFullYear()}-${t.getMonth() + 1}-${t.getDate()}`;
+
+        initCalendar();
+        sessionStorage.setItem('studyDate', tStr); // Default today
+        loadDailyWords(tStr);
+
+        // Update progress stats
+        document.getElementById('flashcardsCount').textContent = progress.flashcardsCompleted || 0;
+        document.getElementById('typingCount').textContent = progress.typingCompleted || 0;
+        document.getElementById('writingCount').textContent = progress.writingCompleted || 0;
+
+        // Update progress bars (based on 100 as max or daily goal? User said "Reduce stats size" not logic, keep 100 max for now)
+        const maxProgress = 100;
+        document.getElementById('flashcardsProgress').style.width =
+            Math.min((progress.flashcardsCompleted / maxProgress) * 100, 100) + '%';
+        document.getElementById('typingProgress').style.width =
+            Math.min((progress.typingCompleted / maxProgress) * 100, 100) + '%';
+        document.getElementById('writingProgress').style.width =
+            Math.min((progress.writingCompleted / maxProgress) * 100, 100) + '%';
+
+        // Update weekly goal
+        const totalCompleted = (progress.flashcardsCompleted || 0) +
+            (progress.typingCompleted || 0) +
+            (progress.writingCompleted || 0);
+        const weeklyGoal = 10;
+        const weeklyProgress = Math.min((totalCompleted / weeklyGoal) * 100, 100);
+
+        document.getElementById('weeklyGoalText').textContent = `${totalCompleted}/${weeklyGoal}`;
+        document.getElementById('weeklyGoalProgress').style.width = weeklyProgress + '%';
+
+        // Load recent activity
+        async function loadRecentActivity() {
+            // Ensure DB init
+            await dbService.init();
+
+            // Get history async
+            // auth.getStudyHistory calls dbService.getStudyHistory(userId)
+            // But auth.currentUser might be null if init didn't finish.
+            // Let's rely on dbService directly if needed or wait.
+
+            const history = await dbService.getStudyHistory(user ? user.id : null);
+            const recentActivityDiv = document.getElementById('recentActivity');
+
+            if (history && history.length > 0) {
+                // Show last 5 activities
+                const recentActivities = history.slice(0, 5); // getStudyHistory returns reverse order usually? 
+                // dbService.getStudyHistory returns in proper display order (descending) or we slice.
+                // Let's assume it returns descending.
+                // const recentActivities = history.slice(0, 5);
+
+                let html = '<div style="display: flex; flex-direction: column; gap: 1rem;">';
+
+                recentActivities.forEach(activity => {
+                    const date = new Date(activity.timestamp);
+                    const dateStr = date.toLocaleDateString('ko-KR', {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+
+                    let icon = '';
+                    let activityName = '';
+
+                    switch (activity.type) {
+                        case 'flashcard':
+                            icon = '📇';
+                            activityName = '플래시카드';
+                            break;
+                        case 'typing':
+                            icon = '⌨️';
+                            activityName = '타이핑 연습';
+                            break;
+                        case 'writing':
+                            icon = '✍️';
+                            activityName = '문장 만들기';
+                            break;
+                    }
+
+                    html += `
+                        <div class="card" style="padding: 1rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <span style="font-size: 1.5rem; margin-right: 0.5rem;">${icon}</span>
+                                    <strong>${activityName}</strong>
+                                    ${activity.score ? `<span class="badge badge-success" style="margin-left: 0.5rem;">${activity.score}점</span>` : ''}
+                                </div>
+                                <div style="font-size: 0.875rem; color: var(--text-muted);">
+                                    ${dateStr}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+                recentActivityDiv.innerHTML = html;
+            }
+        }
+
+        loadRecentActivity();
+
+        // Update Stats Async
+        (async function updateStats() {
+            await dbService.init();
+            const assignments = await dbService.getAssignments();
+            const submissions = await dbService.getSubmissions();
+
+            const currentUser = auth.getCurrentUser();
+            if (!currentUser) return; // Should handle re-auth
+
+            // Filter my submissions
+            const mySubmissions = submissions.filter(s => {
+                if (s.studentId) return s.studentId === currentUser.id || s.studentId === currentUser.username;
+                return s.studentName === currentUser.name;
+            });
+
+            // Count Assignments (Targeting logic is usually 'All' in this MVP)
+            const totalAssignments = assignments.length;
+            const mySubmittedCount = mySubmissions.filter(s => assignments.some(a => a.id === s.assignmentId)).length;
+            const myUnsubmittedCount = Math.max(0, totalAssignments - mySubmittedCount);
+
+            const badge = document.getElementById('assignmentBadge');
+            if (badge) badge.textContent = `${myUnsubmittedCount}개 미완료`;
+
+            // Update Worksheet Stats Card
+            const pendingEl = document.getElementById('worksheetPendingCount');
+            const totalInfoEl = document.getElementById('worksheetTotalInfo');
+            if (pendingEl) pendingEl.textContent = myUnsubmittedCount;
+            if (totalInfoEl) totalInfoEl.textContent = `총 ${totalAssignments}개 중 제출 ${mySubmittedCount}개`;
+
+            // Removed Append Stats to Welcome Message logic as it is now in the main stats grid.
+        })();
+
+        // Add entrance animation
+        const cards = document.querySelectorAll('.card, .glass-card');
+        cards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+                card.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 로그인 - 어휘나라</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .admin-theme {
+            --primary-color: #6c5ce7;
+            --secondary-color: #a29bfe;
+        }
+    </style>
+</head>
+
+<body class="admin-theme">
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container navbar-content">
+            <a href="../index.html" class="navbar-brand">✨ 어휘나라 (관리자)</a>
+            <ul class="navbar-menu">
+                <li><a href="../index.html" class="navbar-link">홈으로</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Login Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="glass-card" style="max-width: 500px; margin: 0 auto; border: 1px solid #6c5ce7;">
+                <div class="text-center mb-4">
+                    <h1>⚙️ 관리자 로그인</h1>
+                    <p class="card-text">시스템 전체 관리자 계정으로 로그인하세요</p>
+                </div>
+
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label class="form-label" for="username">아이디</label>
+                        <input type="text" id="username" class="form-input" placeholder="관리자 아이디" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="password">비밀번호</label>
+                        <input type="password" id="password" class="form-input" placeholder="비밀번호" required>
+                    </div>
+
+                    <div id="errorMessage" class="hidden"
+                        style="color: var(--secondary-500); margin-bottom: 1rem; text-align: center;"></div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%; background: #6c5ce7;">
+                        로그인
+                    </button>
+                </form>
+
+                <div class="mt-4"
+                    style="padding: 1rem; background: var(--bg-dark-tertiary); border-radius: var(--radius-md);">
+                    <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                        <strong>💡 테스트 계정:</strong>
+                    </p>
+                    <p style="font-size: 0.875rem; color: var(--text-muted); margin: 0.25rem 0;">
+                        아이디: admin
+                    </p>
+                    <p style="font-size: 0.875rem; color: var(--text-muted); margin: 0.25rem 0;">
+                        비밀번호: admin1234
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <!-- Config & Data Service -->
+    <script src="../js/firebase-config.js"></script>
+    <script src="../js/data-service.js"></script>
+    <script src="../js/auth.js"></script>
+    <script>
+        // Check if already logged in
+        if (auth.isLoggedIn() && auth.getCurrentUser().role === 'admin') {
+            window.location.href = 'dashboard.html';
+        }
+
+        const loginForm = document.getElementById('loginForm');
+        const errorMessage = document.getElementById('errorMessage');
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            // Wait for auth login
+            const result = await auth.login(username, password, 'admin');
+
+            if (result.success) {
+                // Successful login
+                window.location.href = 'dashboard.html';
+            } else {
+                // Show error
+                errorMessage.textContent = result.message;
+                errorMessage.classList.remove('hidden');
+
+                // Shake animation
+                loginForm.style.animation = 'shake 0.5s';
+                setTimeout(() => {
+                    loginForm.style.animation = '';
+                }, 500);
+            }
+        });
+
+        // Add shake animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+                20%, 40%, 60%, 80% { transform: translateX(10px); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+
+</html>

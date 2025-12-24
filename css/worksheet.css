@@ -1,0 +1,207 @@
+/* Worksheet Print Styles */
+body {
+    font-family: 'Gamja Flower', cursive, sans-serif;
+    padding: 0;
+    margin: 0;
+}
+
+h1 {
+    margin: 0;
+    font-size: 2rem;
+}
+
+.worksheet-section {
+    margin-top: 10px;
+}
+
+.vocab-section-break {
+    page-break-before: always;
+    height: 1px;
+}
+
+.vocab-section-break:first-child {
+    page-break-before: auto;
+}
+
+.vocab-header {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+.vocab-header.centered {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.vocab-word {
+    font-weight: bold;
+    font-size: 28px;
+    color: #333;
+}
+
+.vocab-hanja {
+    color: #666;
+    font-size: 24px;
+}
+
+.vocab-meaning-box {
+    background: #f9f9f9;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    font-size: 18px;
+}
+
+.sentences-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.sentence-item {
+    break-inside: avoid;
+    margin-bottom: 15px;
+}
+
+.sentence-text {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.writing-line {
+    border-bottom: 1px dashed #bbb;
+    height: 30px;
+}
+
+.hanja-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.hanja-table th,
+.hanja-table td {
+    border: 1px solid #ddd;
+    padding: 15px;
+    text-align: center;
+}
+
+.hanja-table th {
+    background: #f5f5f5;
+}
+
+.vocab-hanja-large {
+    font-size: 32px;
+    font-weight: bold;
+}
+
+.hanja-writing-box {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.writing-box {
+    width: 40px;
+    height: 40px;
+    border: 1px solid #ccc;
+}
+
+/* Stroke Order Sequence Styles */
+.stroke-order-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin: 10px 0 10px 0;
+    border-top: 1px dashed #eee;
+    padding-top: 10px;
+}
+
+.stroke-order-step {
+    width: 40px;
+    height: 40px;
+    border: 1px solid #eee;
+    background: #fff;
+}
+
+/* 15-cell Grid Styles */
+.vocab-15-section {
+    margin-bottom: 15px;
+    break-inside: avoid;
+}
+
+.vocab-info-header {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 5px;
+    align-items: baseline;
+}
+
+.word-box {
+    font-size: 24px;
+    font-weight: bold;
+    border: 2px solid #333;
+    padding: 5px 15px;
+    border-radius: 20px;
+    background: #fffde7;
+}
+
+.hanja-box {
+    font-size: 20px;
+    color: #555;
+}
+
+.penmanship-grid-container {
+    display: grid;
+    grid-template-columns: repeat(15, 1fr);
+    width: 100%;
+    max-width: 100%;
+    border-top: 1px solid #333;
+    border-left: 1px solid #333;
+}
+
+.grid-row {
+    display: contents;
+}
+
+.grid-cell {
+    aspect-ratio: 1;
+    /* Keep square */
+    border-right: 1px solid #333;
+    border-bottom: 1px solid #333;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.grid-cell-text {
+    font-size: 1.2rem;
+    /* Adjusted for cell size */
+    color: #333;
+    font-family: 'Gamja Flower', cursive;
+}
+
+.trace-row .grid-cell-text {
+    color: #ddd;
+    /* Light gray for tracing */
+    font-size: 1.5rem;
+}
+
+/* Print Specific */
+@media print {
+    body {
+        padding: 0;
+    }
+
+    .no-print {
+        display: none;
+    }
+
+    .worksheet-page {
+        width: 210mm;
+        /* A4 */
+        height: 297mm;
+        padding: 20mm;
+        box-sizing: border-box;
+    }
+}
