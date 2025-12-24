@@ -156,16 +156,22 @@
         let lastCheckedUsername = '';
 
         // Username input validation
+        // Username input validation
         usernameInput.addEventListener('input', (e) => {
             const value = e.target.value;
-            // Allow only alphanumeric characters
-            e.target.value = value.replace(/[^a-zA-Z0-9]/g, '');
 
             // Reset check status if username changed
             if (value !== lastCheckedUsername) {
                 isUsernameChecked = false;
-                usernameHelp.style.color = 'var(--text-muted)';
-                usernameHelp.textContent = '영문자 2자 이상, 숫자 사용 가능';
+
+                // Live validation feedback
+                if (/[^a-zA-Z0-9]/.test(value)) {
+                    usernameHelp.style.color = 'var(--secondary-500)';
+                    usernameHelp.textContent = '영문자와 숫자만 입력 가능합니다. (한글 입력 불가)';
+                } else {
+                    usernameHelp.style.color = 'var(--text-muted)';
+                    usernameHelp.textContent = '영문자 2자 이상, 숫자 사용 가능';
+                }
             }
         });
 
@@ -186,9 +192,16 @@
                 return;
             }
 
+
             if (!/^[a-zA-Z]/.test(username)) {
                 usernameHelp.style.color = 'var(--secondary-500)';
                 usernameHelp.textContent = '아이디는 영문자로 시작해야 합니다.';
+                return;
+            }
+
+            if (/[^a-zA-Z0-9]/.test(username)) {
+                usernameHelp.style.color = 'var(--secondary-500)';
+                usernameHelp.textContent = '영문자와 숫자만 입력해주세요.';
                 return;
             }
 
